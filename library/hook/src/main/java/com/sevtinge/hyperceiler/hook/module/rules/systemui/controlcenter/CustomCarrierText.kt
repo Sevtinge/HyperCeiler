@@ -120,7 +120,7 @@ object CustomCarrierText : BaseHook() {
                 val slotId = carrierText.getIntField("innerCarrierSlotId")
 
                 param.args[2] = if (slotId == 0) { // 只显示第一张卡的名称
-                    PropUtils.getPropSu("persist.private.device_name")
+                    PropUtils.getPropSu("persist.private.device_name");
                 } else { // 其它置空隐藏
                     null
                 }
