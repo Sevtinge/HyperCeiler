@@ -61,6 +61,7 @@ import com.sevtinge.hyperceiler.hook.module.rules.systemframework.RemoveSmallWin
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.ScreenRotation;
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.SpeedInstall;
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.ThermalBrightness;
+import com.sevtinge.hyperceiler.hook.module.rules.systemframework.UnlockOneHop;
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.UseAndroidPackageInstaller;
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch.AllowUpdateSystemApp;
 import com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch.BypassIsolationViolation;
@@ -170,6 +171,7 @@ public class SystemFrameworkB extends BaseModule {
         initHook(new BypassForceDownloadui(), mPrefsMap.getBoolean("system_framework_bypass_force_downloadui"));
         initHook(ConservativeMilletFramework.INSTANCE, mPrefsMap.getBoolean("powerkeeper_conservative_millet"));
         initHook(GMSDozeFixFramework.INSTANCE, mPrefsMap.getBoolean("powerkeeper_gms_doze_fix"));
+        initHook(UnlockOneHop.INSTANCE, mPrefsMap.getBoolean("system_framework_unlock_one_hop"));
 
         // 清理菜单
         initHook(new CleanShareMenu(), mPrefsMap.getBoolean("system_framework_clean_share_menu"));
