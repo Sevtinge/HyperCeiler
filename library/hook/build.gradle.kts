@@ -39,6 +39,9 @@ android {
             consumerProguardFiles(libs.versions.proguard.rules.get())
         }
     }
+    kotlinOptions {
+        freeCompilerArgs = listOf("-XXLanguage:+MultiDollarInterpolation")
+    }
 }
 
 java {
