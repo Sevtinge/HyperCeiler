@@ -20,6 +20,7 @@ package com.sevtinge.hyperceiler.hook.module.rules.systemui.controlcenter
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.view.isVisible
 import com.sevtinge.hyperceiler.hook.module.base.BaseHook
 import com.sevtinge.hyperceiler.hook.utils.MethodHandleUtils
@@ -27,6 +28,7 @@ import com.sevtinge.hyperceiler.hook.utils.PropUtils
 import com.sevtinge.hyperceiler.hook.utils.callMethod
 import com.sevtinge.hyperceiler.hook.utils.callMethodAs
 import com.sevtinge.hyperceiler.hook.utils.getIntField
+import com.sevtinge.hyperceiler.hook.utils.getObjectField
 import com.sevtinge.hyperceiler.hook.utils.getObjectFieldAs
 import com.sevtinge.hyperceiler.hook.utils.setIntField
 import io.github.kyuubiran.ezxhelper.core.finder.MethodFinder.`-Static`.methodFinder
@@ -48,6 +50,35 @@ object CustomCarrierText : BaseHook() {
 
     // 隐藏分割线
     private fun hideCarrierSeparator() {
+        findAndHookMethod("com.android.systemui.statusbar.phone.MiuiKeyguardStatusBarView", "onCarrierTextChanged", Int::class.java, String::class.java, object : MethodHook() {
+            override fun before(param: MethodHookParam?) {
+                val carrierText = param?.thisObject?.getObjectField("mCarrierLabel")
+                findAndHookMethod(TextView::class.java, "setText", CharSequence::class.java, object : MethodHook() {
+                    override fun before(param: MethodHookParam?) {
+                        val tv = param?.thisObject
+
+                        val bObj = carrierText
+
+                        if (tv == bObj) {
+                            var original = param?.args[0] as? CharSequence
+                            if (original != null) {
+                                original = original.toString().replace("  |  ", "")
+                                param?.args[0] = original.replace(" | ", "")
+                            }
+                        }
+                    }
+                })
+            }
+        })
+
+
+        findAndHookMethod("com.android.systemui.statusbar.policy.HDController", "isVisible",
+            Int::class.java, object : MethodHook() {
+                override fun before(param: MethodHookParam?) {
+                    param?.result = false
+                }
+            })
+
         loadClass("com.android.systemui.controlcenter.shade.MiuiCarrierTextLayout").methodFinder()
             .filterByName("onMeasure")
             .filterByParamTypes(Int::class.java, Int::class.java)
@@ -101,6 +132,30 @@ object CustomCarrierText : BaseHook() {
 
     // 隐藏全部名称
     private fun hideCarrierText() {
+        findAndHookMethod("com.android.systemui.statusbar.phone.MiuiKeyguardStatusBarView", "onCarrierTextChanged", Int::class.java, String::class.java, object : MethodHook() {
+            override fun before(param: MethodHookParam?) {
+                val carrierText = param?.thisObject?.getObjectField("mCarrierLabel")
+                findAndHookMethod(TextView::class.java, "setText", CharSequence::class.java, object : MethodHook() {
+                    override fun before(param: MethodHookParam?) {
+                        val tv = param?.thisObject
+
+                        val bObj = carrierText
+
+                        if (tv == bObj) {
+                            param?.args[0] = ""
+                        }
+                    }
+                })
+            }
+        })
+
+        findAndHookMethod("com.android.systemui.statusbar.policy.HDController", "isVisible",
+            Int::class.java, object : MethodHook() {
+                override fun before(param: MethodHookParam?) {
+                    param?.result = false
+                }
+            })
+
         loadClass("com.android.systemui.controlcenter.shade.ControlCenterHeaderController")
             .methodFinder()
             .filterByName("updateCarrierAndPrivacyVisible")
@@ -111,6 +166,30 @@ object CustomCarrierText : BaseHook() {
 
     // 显示设备名称
     private fun showDeviceName() {
+        findAndHookMethod("com.android.systemui.statusbar.phone.MiuiKeyguardStatusBarView", "onCarrierTextChanged", Int::class.java, String::class.java, object : MethodHook() {
+            override fun before(param: MethodHookParam?) {
+                val carrierText = param?.thisObject?.getObjectField("mCarrierLabel")
+                findAndHookMethod(TextView::class.java, "setText", CharSequence::class.java, object : MethodHook() {
+                    override fun before(param: MethodHookParam?) {
+                        val tv = param?.thisObject
+
+                        val bObj = carrierText
+
+                        if (tv == bObj) {
+                            param?.args[0] = PropUtils.getProp("persist.private.device_name");
+                        }
+                    }
+                })
+            }
+        })
+
+        findAndHookMethod("com.android.systemui.statusbar.policy.HDController", "isVisible",
+            Int::class.java, object : MethodHook() {
+                override fun before(param: MethodHookParam?) {
+                    param?.result = false
+                }
+            })
+
         loadClass($$"com.android.systemui.controlcenter.shade.ControlCenterCarrierText$mCarrierTextCallback$1")
             .methodFinder()
             .filterByName("onCarrierTextChanged")
@@ -120,7 +199,7 @@ object CustomCarrierText : BaseHook() {
                 val slotId = carrierText.getIntField("innerCarrierSlotId")
 
                 param.args[2] = if (slotId == 0) { // 只显示第一张卡的名称
-                    PropUtils.getPropSu("persist.private.device_name");
+                    PropUtils.getProp("persist.private.device_name");
                 } else { // 其它置空隐藏
                     null
                 }
