@@ -64,7 +64,7 @@ public class CorePatchSettings extends DashboardFragment {
         mExactSignatureCheck.setVisible(mEnable);
         mUsePreSignature.setVisible(mEnable);
 
-        setHide(mLossFingerprint, isMoreAndroidVersion(36));
+        setHide(mLossFingerprint, !isMoreAndroidVersion(36));
 
         findPreference("prefs_key_system_framework_core_patch_enable").setOnPreferenceChangeListener((preference, o) -> {
             if ((boolean) o) {

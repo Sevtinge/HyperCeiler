@@ -61,7 +61,7 @@ public class HomeLayoutSettings extends DashboardFragment {
         mPadV = findPreference("prefs_key_home_folder_horizontal_padding_pad_v");
 
         if (isPad()) {
-            setHide(mSearch, false);
+            setHide(mSearch, true);
             setFuncHint(mLayoutH, 1);
             setFuncHint(mIconLayoutNew, 1);
         }

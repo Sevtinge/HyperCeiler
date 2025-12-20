@@ -32,6 +32,6 @@ public class HomeDrawerSettings extends DashboardFragment {
 
     @Override
     public void initPrefs() {
-        setHide(findPreference("prefs_key_home_drawer_blur"), !isMoreHyperOSVersion(3f));
+        setHide(findPreference("prefs_key_home_drawer_blur"), isMoreHyperOSVersion(3f));
     }
 }

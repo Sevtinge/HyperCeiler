@@ -65,7 +65,7 @@ public class HomeTitleSettings extends DashboardFragment {
             return true;
         });
 
-        setHide(mDisableHideTheme, isPad());
+        setHide(mDisableHideTheme, !isPad());
 
         Bundle args1 = new Bundle();
         Bundle args2 = new Bundle();

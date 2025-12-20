@@ -90,9 +90,11 @@ public class IconManageNewSettings extends DashboardFragment {
         mAlarmClockIconN.setVisible(Integer.parseInt(getSharedPreferences().getString("prefs_key_system_ui_status_bar_icon_alarm_clock", "0")) == 3);
 
         if (isMoreHyperOSVersion(3f)) {
-            setHide(mSmallHD, false);
-            setHide(mBigHD, false);
-            setHide(mNewHD, false);
+            setHide(mSmallHD, true);
+            setHide(mBigHD, true);
+            setHide(mNewHD, true);
+            setHide(mHideRoaming, true);
+            setHide(mIconMobileNetwork, true);
         } else if (isMoreSmallVersion(200, 2f)) {
             setFuncHint(mSmallHD, 1);
             setFuncHint(mBigHD, 1);
@@ -102,24 +104,24 @@ public class IconManageNewSettings extends DashboardFragment {
         if (getContext() != null) {
 
             if (!isSupportWifi(getContext())) {
-               setHide(mHideWifiIndicator, false);
-               setHide(mHideWifi, false);
-               setHide(mHideWifiStandard, false);
+               setHide(mHideWifiIndicator, true);
+               setHide(mHideWifi, true);
+               setHide(mHideWifiStandard, true);
             }
 
             if (!isSupportTelephony(getContext())) {
-                setHide(mSmallHD, false);
-                setHide(mBigHD, false);
-                setHide(mNewHD, false);
-                setHide(mHideNoSIM, false);
-                setHide(mHideCard1, false);
-                setHide(mHideCard2, false);
-                setHide(mHideRoaming, false);
-                setHide(mHideVoWiFi, false);
-                setHide(mHideVoLTE, false);
-                setHide(mMobileType, false);
-                setHide(mIconMobileNetwork, false);
-                setHide(mSwitchSwap, false);
+                setHide(mSmallHD, true);
+                setHide(mBigHD, true);
+                setHide(mNewHD, true);
+                setHide(mHideNoSIM, true);
+                setHide(mHideCard1, true);
+                setHide(mHideCard2, true);
+                setHide(mHideRoaming, true);
+                setHide(mHideVoWiFi, true);
+                setHide(mHideVoLTE, true);
+                setHide(mMobileType, true);
+                setHide(mIconMobileNetwork, true);
+                setHide(mSwitchSwap, true);
             }
 
         }
