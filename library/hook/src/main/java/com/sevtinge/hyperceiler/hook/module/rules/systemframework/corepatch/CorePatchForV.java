@@ -21,6 +21,19 @@ package com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch;
 import de.robv.android.xposed.XposedHelpers;
 
 public class CorePatchForV extends CorePatchForU {
+
+    @Override
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+        super.handleLoadPackage(loadPackageParam);
+
+        var checkDowngradeAlt = XposedHelpers.findMethodExactIfExists("com.android.server.pm.PackageManagerServiceUtils",
+            loadPackageParam.classLoader, "checkDowngrade", "com.android.server.pm.PackageSetting",
+            "android.content.pm.PackageInfoLite");
+        if (checkDowngradeAlt != null) {
+            XposedBridge.hookMethod(checkDowngradeAlt, new ReturnConstant("system_framework_core_patch_downgr", true, null));
+        }
+    }
+
     @Override
     Class<?> getParsedPackage(ClassLoader classLoader) {
         return XposedHelpers.findClassIfExists("com.android.internal.pm.parsing.pkg.ParsedPackage", classLoader);

@@ -20,9 +20,7 @@ package com.sevtinge.hyperceiler.hook.module.base;
 
 import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.logLevel;
 
-import com.sevtinge.hyperceiler.hook.XposedInit;
 import com.sevtinge.hyperceiler.hook.module.base.tool.HookTool;
-import com.sevtinge.hyperceiler.hook.module.base.tool.ResourcesTool;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -31,7 +29,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public abstract class BaseHook extends HookTool {
     public String TAG = getClass().getSimpleName();
-    public static final ResourcesTool mResHook = XposedInit.mResHook;
+    // 资源工具由 ResourcesTool 单例管理（由 libxposed 入口初始化）
     // public static final XmlTool mXmlTool = BaseXposedInit.mXmlTool;
     public static final String ACTION_PREFIX = "com.sevtinge.hyperceiler.module.action.";
 

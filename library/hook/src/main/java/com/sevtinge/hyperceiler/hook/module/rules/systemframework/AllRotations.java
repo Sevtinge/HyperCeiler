@@ -32,8 +32,4 @@ public class AllRotations extends BaseHook {
             }
         });
     }
-
-    /*public static void initZygote() {
-        XposedInit.mResourcesHook.setObjectReplacement("android", "bool", "config_allowAllRotations", mPrefsMap.getBoolean("system_framework_screen_all_rotations"));
-    }*/
 }

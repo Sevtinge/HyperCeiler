@@ -47,6 +47,7 @@ import com.sevtinge.hyperceiler.common.utils.LanguageHelper;
 import com.sevtinge.hyperceiler.common.utils.search.SearchHelper;
 import com.sevtinge.hyperceiler.holiday.HolidayHelper;
 import com.sevtinge.hyperceiler.hook.callback.IResult;
+import com.sevtinge.hyperceiler.hook.module.base.manager.ServiceManager;
 import com.sevtinge.hyperceiler.hook.safe.CrashData;
 import com.sevtinge.hyperceiler.hook.utils.BackupUtils;
 import com.sevtinge.hyperceiler.hook.utils.ThreadPoolManager;
@@ -58,7 +59,6 @@ import com.sevtinge.hyperceiler.main.NaviBaseActivity;
 import com.sevtinge.hyperceiler.main.fragment.DetailFragment;
 import com.sevtinge.hyperceiler.utils.LogServiceUtils;
 import com.sevtinge.hyperceiler.utils.PermissionUtils;
-import com.sevtinge.hyperceiler.utils.XposedActivateHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,7 +105,7 @@ public class HyperCeilerTabActivity extends NaviBaseActivity
         LanguageHelper.init(this);
         PermissionUtils.init(this);
         ShellInit.init(this);
-        XposedActivateHelper.init(this);
+        ServiceManager.INSTANCE.init();
 
         final boolean restored = (savedInstanceState != null);
 
@@ -155,6 +155,7 @@ public class HyperCeilerTabActivity extends NaviBaseActivity
             mHandler.post(() -> {
                 appCrash = computedAppCrash;
                 mHandler.postDelayed(this::showSafeModeDialogIfNeeded, 600);
+                if (!ServiceManager.isModuleActivated()) DialogHelper.showXposedActivateDialog(this);
                 requestCta();
             });
         });

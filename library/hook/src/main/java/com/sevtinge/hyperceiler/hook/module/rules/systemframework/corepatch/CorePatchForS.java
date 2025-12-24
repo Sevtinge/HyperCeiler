@@ -43,7 +43,7 @@ public class CorePatchForS extends CorePatchForR {
                 hookMethod(doesSignatureMatchForPermissions, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
-                        if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false)) {
+                        if (prefEnabled("system_framework_core_patch_digest_creak", true) && prefEnabled("system_framework_core_patch_use_pre_signature", false)) {
                             //If we decide to crack this then at least make sure they are same apks, avoid another one that tries to impersonate.
                             if (param.getResult().equals(false)) {
                                 String pPname = (String) XposedHelpers.callMethod(param.args[1], "getPackageName");

@@ -25,18 +25,22 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.sevtinge.hyperceiler.hook.provider.SharedPrefsProvider;
+import androidx.annotation.Nullable;
+
 import com.sevtinge.hyperceiler.hook.module.base.tool.AppsTool;
+import com.sevtinge.hyperceiler.hook.provider.SharedPrefsProvider;
 import com.sevtinge.hyperceiler.hook.utils.api.ProjectApi;
 import com.sevtinge.hyperceiler.hook.utils.log.XposedLogUtils;
 import com.sevtinge.hyperceiler.hook.utils.prefs.PrefsChangeObserver.PrefToUri;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
-import de.robv.android.xposed.XposedBridge;
+import io.github.libxposed.service.RemotePreferences;
 
 public class PrefsUtils {
     public static SharedPreferences mSharedPreferences = null;
@@ -47,6 +51,68 @@ public class PrefsUtils {
     public static String mPrefsName = "hyperceiler_prefs";
     public static String mPrefsPath = "/data/user_de/0/" + ProjectApi.mAppModulePkg + "/shared_prefs";
     public static String mPrefsFile = mPrefsPath + "/" + mPrefsName + ".xml";
+    public static RemotePreferences remotePrefs = null;
+    static HashSet<PreferenceObserver> prefObservers = new HashSet<>();
+
+    public static void syncAllToRemotePreferences() {
+        RemotePreferences rp = remotePrefs;
+        if (rp == null || mSharedPreferences == null) return;
+
+        Map<String, ?> all = mSharedPreferences.getAll();
+        SharedPreferences.Editor editor = rp.edit();
+        editor.clear();
+
+        for (Map.Entry<String, ?> entry : all.entrySet()) {
+            String key = entry.getKey();
+            Object val = entry.getValue();
+            applyToEditor(editor, key, val);
+        }
+
+        editor.apply();
+    }
+
+    private static void syncKeyToRemotePreferences(String key, @Nullable Object val) {
+        RemotePreferences rp = remotePrefs;
+        if (rp == null) return;
+
+        SharedPreferences.Editor editor = rp.edit();
+        applyToEditor(editor, key, val);
+        editor.apply();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void applyToEditor(SharedPreferences.Editor editor, String key, @Nullable Object val) {
+        if (key == null) return;
+        if (val == null) {
+            editor.remove(key);
+            return;
+        }
+
+        if (val instanceof String s) {
+            editor.putString(key, s);
+        } else if (val instanceof Integer i) {
+            editor.putInt(key, i);
+        } else if (val instanceof Boolean b) {
+            editor.putBoolean(key, b);
+        } else if (val instanceof Set<?>) {
+            editor.putStringSet(key, (Set<String>) val);
+        }
+    }
+
+
+    public interface PreferenceObserver {
+        void onChange(String key);
+    }
+
+    public static void observePreferenceChange(PreferenceObserver prefObserver) {
+        prefObservers.add(prefObserver);
+    }
+
+    public static void handlePreferenceChanged(@Nullable String key) {
+        for (PreferenceObserver prefObserver:prefObservers) {
+            prefObserver.onChange(key);
+        }
+    }
 
     public static SharedPreferences getSharedPrefs(Context context, boolean multiProcess) {
         context = AppsTool.getProtectedContext(context);
@@ -112,7 +178,7 @@ public class PrefsUtils {
                 return prefValue;
             } else XposedLogUtils.logI("ContentResolver", "[" + name + "] Cursor fail: " + cursor);
         } catch (Throwable t) {
-            XposedBridge.log(t);
+            XposedLogUtils.logE("PrefsUtils", t);
         }
 
         if (mPrefsMap.containsKey(name))
@@ -135,7 +201,7 @@ public class PrefsUtils {
                 XposedLogUtils.logI("ContentResolver", "[" + name + "] Cursor fail: null");
             }
         } catch (Throwable t) {
-            XposedBridge.log(t);
+            XposedLogUtils.logE("PrefsUtils", t);
         }
 
         LinkedHashSet<String> empty = new LinkedHashSet<>();
@@ -156,7 +222,7 @@ public class PrefsUtils {
                 return prefValue;
             } else XposedLogUtils.logI("ContentResolver", "[" + name + "] Cursor fail: " + cursor);
         } catch (Throwable t) {
-            XposedBridge.log(t);
+            XposedLogUtils.logE("PrefsUtils", t);
         }
 
         if (mPrefsMap.containsKey(name))
@@ -174,7 +240,7 @@ public class PrefsUtils {
                 return prefValue == 1;
             } else XposedLogUtils.logI("ContentResolver", "[" + name + "] Cursor fail: " + cursor);
         } catch (Throwable t) {
-            XposedBridge.log(t);
+            XposedLogUtils.logE("PrefsUtils", t);
         }
 
         if (mPrefsMap.containsKey(name))
@@ -187,6 +253,12 @@ public class PrefsUtils {
         mSharedPreferences.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
             Log.i("prefs", "Changed: " + key);
             AppsTool.requestBackup(context);
+
+            if (key == null) {
+                syncAllToRemotePreferences();
+                return;
+            }
+
             Object val = sharedPreferences.getAll().get(key);
             String path = "";
             if (val instanceof String)
@@ -197,6 +269,9 @@ public class PrefsUtils {
                 path = "integer/";
             else if (val instanceof Boolean)
                 path = "boolean/";
+
+            // 同步写入 remote prefs（libxposed getRemotePreferences）
+            syncKeyToRemotePreferences(key, val);
 
             ContentResolver resolver = context.getContentResolver();
             resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/" + path + key), null);

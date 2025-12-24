@@ -44,7 +44,7 @@ public class CorePatchForU extends CorePatchForT {
         }
 
         // https://cs.android.com/android/platform/superproject/+/android-14.0.0_r60:frameworks/base/services/core/java/com/android/server/pm/ReconcilePackageUtils.java;l=61;bpv=1;bpt=0
-        if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && prefs.getBoolean("prefs_key_system_framework_core_patch_shared_user", false)) {
+        if (prefEnabled("system_framework_core_patch_digest_creak", true) && prefEnabled("system_framework_core_patch_shared_user", false)) {
             setStaticBooleanField(utilClass, "ALLOW_NON_PRELOADS_SYSTEM_SHAREDUIDS", true);
         }
 
@@ -53,7 +53,7 @@ public class CorePatchForU extends CorePatchForT {
             "checkDowngrade",
             "com.android.server.pm.pkg.AndroidPackage",
             "android.content.pm.PackageInfoLite",
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_downgr", null));
+            new ReturnConstant("system_framework_core_patch_downgr", true, null));
 
         findAndHookMethod("com.android.server.pm.ScanPackageUtils", loadPackageParam.classLoader,
                 "assertMinSignatureSchemeIsValid",
@@ -61,7 +61,7 @@ public class CorePatchForU extends CorePatchForT {
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
-                        if (prefs.getBoolean("prefs_key_system_framework_core_patch_auth_creak", true)) {
+                        if (prefEnabled("system_framework_core_patch_auth_creak", true)) {
                             param.setResult(null);
                         }
                     }
@@ -72,7 +72,7 @@ public class CorePatchForU extends CorePatchForT {
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM ? "com.android.internal.pm.parsing.pkg.ParsedPackage" : "com.android.server.pm.parsing.pkg.ParsedPackage"), int.class, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
-                        if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false)) {
+                        if (prefEnabled("system_framework_core_patch_digest_creak", true) && prefEnabled("system_framework_core_patch_use_pre_signature", false)) {
                             //If we decide to crack this then at least make sure they are same apks, avoid another one that tries to impersonate.
                             if (param.getResult().equals(false)) {
                                 String pPname = (String) XposedHelpers.callMethod(param.args[1], "getPackageName");

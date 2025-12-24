@@ -41,7 +41,6 @@ import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getSyste
 import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.scanModules;
 import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.IS_LOGGER_ALIVE;
 import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.LOGGER_CHECKER_ERR_CODE;
-import static com.sevtinge.hyperceiler.utils.XposedActivateHelper.isModuleActive;
 
 import androidx.preference.Preference;
 
@@ -50,6 +49,7 @@ import com.sevtinge.hyperceiler.R;
 import com.sevtinge.hyperceiler.common.utils.MainActivityContextHelper;
 import com.sevtinge.hyperceiler.dashboard.SettingsPreferenceFragment;
 import com.sevtinge.hyperceiler.expansion.utils.SignUtils;
+import com.sevtinge.hyperceiler.hook.module.base.manager.ServiceManager;
 import com.sevtinge.hyperceiler.hook.utils.api.ProjectApi;
 import com.sevtinge.hyperceiler.hook.utils.devicesdk.ModuleInfo;
 import com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt;
@@ -203,11 +203,12 @@ public class DevelopmentDebugInfoFragment extends SettingsPreferenceFragment {
             // propertiesCheck.put("WhoAmI", getWhoAmI());
             propertiesCheck.put("RootGroups", getRootGroupsInfo());
             propertiesCheck.put("CurrentUserId", String.valueOf(getCurrentUserId()));
-            propertiesCheck.put("ModuleActive", String.valueOf(isModuleActive));
+            propertiesCheck.put("ModuleActive", String.valueOf(ServiceManager.isModuleActivated()));
             propertiesCheck.put("DebugModeActivate", String.valueOf(PrefsUtils.getSharedBoolPrefs(requireContext(), "prefs_key_development_debug_mode", false)));
             propertiesCheck.put("LoggerStatus", IS_LOGGER_ALIVE + ", " + LOGGER_CHECKER_ERR_CODE);
             propertiesCheck.put("Signature", SignUtils.getSHA256Signature(requireContext()));
             propertiesCheck.put("SignCheckPass", String.valueOf(SignUtils.isSignCheckPass(requireContext())));
+            // propertiesCheck.put("RootPermission", String.valueOf(ShellInit.ready()));
         } catch (Exception ignored) {
         }
 

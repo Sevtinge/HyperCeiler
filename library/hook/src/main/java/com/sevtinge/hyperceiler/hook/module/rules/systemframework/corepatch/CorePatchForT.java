@@ -39,7 +39,7 @@ public class CorePatchForT extends CorePatchForS {
             "com.android.server.pm.parsing.pkg.AndroidPackage",
             "android.content.pm.PackageInfoLite");
         if (checkDowngrade != null) {
-            XposedBridge.hookMethod(checkDowngrade, new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_downgr", null));
+            XposedBridge.hookMethod(checkDowngrade, new ReturnConstant("system_framework_core_patch_downgr", true, null));
         }
 
         Class<?> signingDetails = getSigningDetails(loadPackageParam.classLoader);
@@ -52,7 +52,7 @@ public class CorePatchForT extends CorePatchForS {
                 // Or applications will have all privileged permissions
                 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/content/pm/PackageParser.java;l=5947?q=CertCapabilities
                 // https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/services/core/java/com/android/server/accounts/AccountManagerService.java;l=5867
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)) {
+                if (prefEnabled("system_framework_core_patch_digest_creak", true)) {
                     if ((Integer) param.args[1] != 4 && (Integer) param.args[1] != 16) {
                         param.setResult(true);
                     }
@@ -66,7 +66,7 @@ public class CorePatchForT extends CorePatchForS {
             ParsedPackage, int.class, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false)) {
+                    if (prefEnabled("system_framework_core_patch_digest_creak", true) && prefEnabled("system_framework_core_patch_use_pre_signature", false)) {
                         //If we decide to crack this then at least make sure they are same apks, avoid another one that tries to impersonate.
                         if (param.getResult().equals(false)) {
                             String pPname = (String) XposedHelpers.callMethod(param.args[1], "getPackageName");
@@ -85,7 +85,7 @@ public class CorePatchForT extends CorePatchForS {
             XposedBridge.hookMethod(assertMinSignatureSchemeIsValid, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    if (prefs.getBoolean("prefs_key_system_framework_core_patch_auth_creak", true)) {
+                    if (prefEnabled("system_framework_core_patch_auth_creak", true)) {
                         param.setResult(null);
                     }
                 }
@@ -97,7 +97,7 @@ public class CorePatchForT extends CorePatchForS {
             XposedBridge.hookAllConstructors(strictJarVerifier, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    if (prefs.getBoolean("prefs_key_system_framework_core_patch_auth_creak", true)) {
+                    if (prefEnabled("system_framework_core_patch_auth_creak", true)) {
                         XposedHelpers.setBooleanField(param.thisObject, "signatureSchemeRollbackProtectionsEnforced", false);
                     }
                 }
@@ -110,6 +110,26 @@ public class CorePatchForT extends CorePatchForS {
         if (utils != null) {
             deoptimizeMethod(utils, "canJoinSharedUserId");
         }
+
+        var apkSigningBlockClass = findClass("android.util.apk.ApkSigningBlockUtils", loadPackageParam.classLoader);
+        var signatureInfoClass = findClass("android.util.apk.SignatureInfo", loadPackageParam.classLoader);
+        findAndHookMethod(apkSigningBlockClass, "parseVerityDigestAndVerifySourceLength", byte[].class, long.class, signatureInfoClass, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (prefEnabled("system_framework_core_patch_auth_creak", false)) {
+                    param.setResult(Arrays.copyOfRange((byte[]) param.args[0], 0, 32));
+                }
+            }
+        });
+
+        findAndHookMethod(apkSigningBlockClass, "verifyIntegrityForVerityBasedAlgorithm", byte[].class, RandomAccessFile.class, signatureInfoClass, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (prefEnabled("system_framework_core_patch_auth_creak", false)) {
+                    param.setResult(null);
+                }
+            }
+        });
     }
 
     Class<?> getParsedPackage(ClassLoader classLoader) {

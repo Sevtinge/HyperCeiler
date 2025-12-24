@@ -48,7 +48,6 @@ import java.util.zip.ZipEntry;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -78,18 +77,20 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         }
     }
 
-    final XSharedPreferences prefs = new XSharedPreferences(ProjectApi.mAppModulePkg, PrefsUtils.mPrefsName);
+    protected boolean prefEnabled(String key, boolean defValue) {
+        return PrefsUtils.mPrefsMap.getBoolean(key, defValue);
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         if (isNotReleaseVersion) {
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": downgrade=" + prefs.getBoolean("prefs_key_system_framework_core_patch_downgr", true));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": authcreak=" + prefs.getBoolean("prefs_key_system_framework_core_patch_auth_creak", true));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": digestCreak=" + prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": UsePreSig=" + prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + " exactSignatureCheck=" + prefs.getBoolean("prefs_key_system_framework_core_patch_exact_signature_check", false));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + " sharedUser=" + prefs.getBoolean("prefs_key_system_framework_core_patch_shared_user", false));
-            XposedBridge.log("[HyperCeiler][D][android]" + TAG + "disableVerificationAgent=" + prefs.getBoolean("prefs_key_system_framework_disable_verification_agent", true));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": downgrade=" + prefEnabled("system_framework_core_patch_downgr", true));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": authcreak=" + prefEnabled("system_framework_core_patch_auth_creak", true));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": digestCreak=" + prefEnabled("system_framework_core_patch_digest_creak", true));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + ": UsePreSig=" + prefEnabled("system_framework_core_patch_use_pre_signature", false));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + " exactSignatureCheck=" + prefEnabled("system_framework_core_patch_exact_signature_check", false));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + " sharedUser=" + prefEnabled("system_framework_core_patch_shared_user", false));
+            XposedBridge.log("[HyperCeiler][D][android]" + TAG + "disableVerificationAgent=" + prefEnabled("system_framework_disable_verification_agent", true));
         }
 
         var pmService = findClassIfExists("com.android.server.pm.PackageManagerService",
@@ -100,34 +101,34 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
                 "android.content.pm.PackageInfoLite");
             if (checkDowngrade != null) {
                 // 允许降级
-                XposedBridge.hookMethod(checkDowngrade, new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_downgr", null));
+                XposedBridge.hookMethod(checkDowngrade, new ReturnConstant("system_framework_core_patch_downgr", true, null));
             }
         }
 
         // apk内文件修改后 digest校验会失败
         hookAllMethods("android.util.jar.StrictJarVerifier", loadPackageParam.classLoader, "verifyMessageDigest",
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", true));
+            new ReturnConstant("system_framework_core_patch_auth_creak", true, true));
         hookAllMethods("android.util.jar.StrictJarVerifier", loadPackageParam.classLoader, "verify",
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", true));
+            new ReturnConstant("system_framework_core_patch_auth_creak", true, true));
         hookAllMethods("java.security.MessageDigest", loadPackageParam.classLoader, "isEqual",
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", true));
+            new ReturnConstant("system_framework_core_patch_auth_creak", true, true));
 
         // Targeting R+ (version " + Build.VERSION_CODES.R + " and above) requires"
         // + " the resources.arsc of installed APKs to be stored uncompressed"
         // + " and aligned on a 4-byte boundary
         // target >=30 的情况下 resources.arsc 必须是未压缩的且4K对齐
         hookAllMethods("android.content.res.AssetManager", loadPackageParam.classLoader, "containsAllocatedTable",
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", false));
+            new ReturnConstant("system_framework_core_patch_auth_creak", true, false));
 
         // No signature found in package of version " + minSignatureSchemeVersion
         // + " or newer for package " + apkPath
         findAndHookMethod("android.util.apk.ApkSignatureVerifier", loadPackageParam.classLoader, "getMinimumSignatureSchemeVersionForTargetSdk", int.class,
-            new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", 0));
+            new ReturnConstant("system_framework_core_patch_auth_creak", true, 0));
         var apkVerifierClass = XposedHelpers.findClassIfExists("com.android.apksig.ApkVerifier",
             loadPackageParam.classLoader);
         if (apkVerifierClass != null) {
             findAndHookMethod(apkVerifierClass, "getMinimumSignatureSchemeVersionForTargetSdk", loadPackageParam.classLoader, int.class,
-                new ReturnConstant(prefs, "prefs_key_system_framework_core_patch_auth_creak", 0));
+                new ReturnConstant("system_framework_core_patch_auth_creak", true, 0));
         }
 
         // 当verifyV1Signature抛出转换异常时，替换一个签名作为返回值
@@ -151,8 +152,8 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         hookAllMethods("android.util.jar.StrictJarVerifier", loadPackageParam.classLoader, "verifyBytes", new XC_MethodHook() {
             public void afterHookedMethod(MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)) {
-                    if (!prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false)) {
+                if (prefEnabled("system_framework_core_patch_digest_creak", true)) {
+                    if (!prefEnabled("system_framework_core_patch_use_pre_signature", false)) {
                         final Object block = constructor.newInstance(param.args[0]);
                         Object[] infos = (Object[]) XposedHelpers.callMethod(block, "getSignerInfos");
                         Object info = infos[0];
@@ -166,7 +167,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         });
         hookAllMethods("android.util.apk.ApkSignatureVerifier", loadPackageParam.classLoader, "verifyV1Signature", new XC_MethodHook() {
             public void afterHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_auth_creak", true)) {
+                if (prefEnabled("system_framework_core_patch_auth_creak", true)) {
                     Throwable throwable = methodHookParam.getThrowable();
                     Integer parseErr = null;
                     if (parseResult != null && ((Method) methodHookParam.method).getReturnType() == parseResult) {
@@ -178,7 +179,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
                     if (throwable != null || parseErr != null) {
                         Signature[] lastSigs = null;
                         try {
-                            if (prefs.getBoolean("prefs_key_system_framework_core_patch_use_pre_signature", false)) {
+                            if (prefEnabled("system_framework_core_patch_use_pre_signature", false)) {
                                 PackageManager PM = AndroidAppHelper.currentApplication().getPackageManager();
                                 if (PM == null) {
                                     XposedBridge.log("[HyperCeiler][E][android]" + TAG + ": [" + ProjectApi.mAppModulePkg + "] Cannot get the Package Manager... Are you using MiUI?");
@@ -196,7 +197,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
                         } catch (Throwable ignored) {
                         }
                         try {
-                            if (lastSigs == null && prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)) {
+                            if (lastSigs == null && prefEnabled("system_framework_core_patch_digest_creak", true)) {
                                 final Object origJarFile = constructorExact.newInstance(methodHookParam.args[parseErr == null ? 0 : 1], true, false);
                                 final ZipEntry manifestEntry = (ZipEntry) XposedHelpers.callMethod(origJarFile, "findEntry", "AndroidManifest.xml");
                                 final Certificate[][] lastCerts;
@@ -252,7 +253,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
                 // Or applications will have all privileged permissions
                 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/content/pm/PackageParser.java;l=5947?q=CertCapabilities
                 // https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/services/core/java/com/android/server/accounts/AccountManagerService.java;l=5867
-                if ((Integer) param.args[1] != 4 && (Integer) param.args[1] != 16 && prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)) {
+                if ((Integer) param.args[1] != 4 && (Integer) param.args[1] != 16 && prefEnabled("system_framework_core_patch_digest_creak", true)) {
                     param.setResult(true);
                 }
             }
@@ -262,7 +263,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)) {
+                if (prefEnabled("system_framework_core_patch_digest_creak", true)) {
                     ApplicationInfo info = (ApplicationInfo) param.thisObject;
                     if ((info.flags & ApplicationInfo.FLAG_SYSTEM) != 0
                         || (info.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
@@ -286,7 +287,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
                     // https://cs.android.com/android/platform/superproject/+/android-14.0.0_r2:frameworks/base/services/core/java/com/android/server/pm/InstallPackageHelper.java;l=1097;drc=5ea7e53c3a787e25af86b0f31933ddd68ae3514e
                     // 16: InstallPackageHelper#preparePackage
                     // https://cs.android.com/android/platform/superproject/+/android-16.0.0_r2:frameworks/base/services/core/java/com/android/server/pm/InstallPackageHelper.java;l=1459;drc=d14620262929e39a409b55d11cb542c1d1c4d2f6
-                    if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && Arrays.stream(Thread.currentThread().getStackTrace()).anyMatch((o) -> o.getMethodName().startsWith("preparePackage"))) {
+                    if (prefEnabled("system_framework_core_patch_digest_creak", true) && Arrays.stream(Thread.currentThread().getStackTrace()).anyMatch((o) -> o.getMethodName().startsWith("preparePackage"))) {
                         shouldBypass.set(true);
                         param.setResult(true);
                     } else {
@@ -297,7 +298,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
             hookAllMethods(keySetManagerClass, "checkUpgradeKeySetLocked", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) && shouldBypass.get()) {
+                    if (prefEnabled("system_framework_core_patch_digest_creak", true) && shouldBypass.get()) {
                         param.setResult(true);
                     }
                 }
@@ -310,8 +311,8 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         hookAllMethods(signingDetails, "hasCommonAncestor", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true)
-                    && prefs.getBoolean("prefs_key_system_framework_core_patch_shared_user", false)
+                if (prefEnabled("system_framework_core_patch_digest_creak", true)
+                    && prefEnabled("system_framework_core_patch_shared_user", false)
                     // because of LSPosed's bug, we can't hook verifySignatures while deoptimize it
                     && Arrays.stream(Thread.currentThread().getStackTrace()).anyMatch((o) -> "verifySignatures".equals(o.getMethodName()))
                 )
@@ -333,7 +334,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         XposedBridge.hookAllMethods(sharedUserSettingClass, "removePackage", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (!prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) || !prefs.getBoolean("prefs_key_system_framework_core_patch_shared_user", false))
+                    if (!prefEnabled("system_framework_core_patch_digest_creak", true) || !prefEnabled("system_framework_core_patch_shared_user", false))
                         return;
                     var flags = (int) XposedHelpers.getObjectField(param.thisObject, "uidFlags");
                     if ((flags & ApplicationInfo.FLAG_SYSTEM) != 0)
@@ -373,7 +374,7 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
         XposedBridge.hookAllMethods(sharedUserSettingClass, "addPackage", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    if (!prefs.getBoolean("prefs_key_system_framework_core_patch_digest_creak", true) || !prefs.getBoolean("prefs_key_system_framework_core_patch_shared_user", false))
+                    if (!prefEnabled("system_framework_core_patch_digest_creak", true) || !prefEnabled("system_framework_core_patch_shared_user", false))
                         return;
                     var flags = (int) XposedHelpers.getObjectField(param.thisObject, "uidFlags");
                     if ((flags & ApplicationInfo.FLAG_SYSTEM) != 0)
@@ -410,13 +411,13 @@ public class CorePatchForR extends XposedHelper implements IXposedHookLoadPackag
             }
         );
 
-        hookAllMethods(getIsVerificationEnabledClass(loadPackageParam.classLoader), "isVerificationEnabled", new ReturnConstant(prefs, "prefs_key_system_framework_disable_verification_agent", false));
+        hookAllMethods(getIsVerificationEnabledClass(loadPackageParam.classLoader), "isVerificationEnabled", new ReturnConstant("system_framework_disable_verification_agent", true, false));
 
         // Allow apk splits with different signatures to be installed together
         hookAllMethods(signingDetails, "signaturesMatchExactly", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-                if (prefs.getBoolean("prefs_key_system_framework_core_patch_exact_signature_check", false))
+                if (prefEnabled("system_framework_core_patch_exact_signature_check", false))
                     param.setResult(true);
             }
         });

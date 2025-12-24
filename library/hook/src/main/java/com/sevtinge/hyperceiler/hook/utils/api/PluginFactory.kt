@@ -20,7 +20,7 @@ package com.sevtinge.hyperceiler.hook.utils.api
 
 import android.content.ComponentName
 import android.content.Context
-import de.robv.android.xposed.XposedHelpers
+import com.sevtinge.hyperceiler.hook.utils.reflect.ReflectUtils
 import java.lang.ref.WeakReference
 
 // https://github.com/buffcow/Hyper5GSwitch/blob/master/app/src/main/kotlin/cn/buffcow/hyper5g/hooker/PluginLoader.kt
@@ -32,7 +32,7 @@ internal class PluginFactory(obj: Any) {
     }
 
     lateinit var pluginCtxRef: WeakReference<Context>
-    val mComponentName: Any? = XposedHelpers.getObjectField(obj , "mComponentName")
+    val mComponentName: Any? = ReflectUtils.getObjectField(obj , "mComponentName")
 
     fun componentNames(type: Int, str: String): ComponentName {
         return when (type) {

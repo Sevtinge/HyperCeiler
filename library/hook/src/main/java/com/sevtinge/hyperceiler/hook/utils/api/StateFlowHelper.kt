@@ -22,30 +22,30 @@ import com.sevtinge.hyperceiler.hook.utils.callMethod
 import com.sevtinge.hyperceiler.hook.utils.callStaticMethodAs
 import com.sevtinge.hyperceiler.hook.utils.devicesdk.isMoreAndroidVersion
 import com.sevtinge.hyperceiler.hook.utils.getFirstFieldByExactType
-import de.robv.android.xposed.XposedHelpers
+import com.sevtinge.hyperceiler.hook.utils.reflect.ReflectUtils
 import io.github.kyuubiran.ezxhelper.core.ClassLoaderProvider
 
 object StateFlowHelper {
      private val STATE_FLOW by lazy {
-        XposedHelpers.findClass("kotlinx.coroutines.flow.StateFlow",
+        ReflectUtils.findClass("kotlinx.coroutines.flow.StateFlow",
             ClassLoaderProvider.classLoader
         )
     }
 
     private val STATE_FLOW_KT by lazy {
-        XposedHelpers.findClass("kotlinx.coroutines.flow.StateFlowKt",
+        ReflectUtils.findClass("kotlinx.coroutines.flow.StateFlowKt",
             ClassLoaderProvider.classLoader
         )
     }
 
     private val READONLY_STATE_FLOW by lazy {
-        XposedHelpers.findClass("kotlinx.coroutines.flow.ReadonlyStateFlow",
+        ReflectUtils.findClass("kotlinx.coroutines.flow.ReadonlyStateFlow",
             ClassLoaderProvider.classLoader
         )
     }
 
     private val MUTABLE_STATE_FLOW by lazy {
-        XposedHelpers.findClass("kotlinx.coroutines.flow.MutableStateFlow",
+        ReflectUtils.findClass("kotlinx.coroutines.flow.MutableStateFlow",
             ClassLoaderProvider.classLoader
         )
     }

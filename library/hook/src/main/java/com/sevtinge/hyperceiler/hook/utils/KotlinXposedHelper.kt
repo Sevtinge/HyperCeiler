@@ -23,6 +23,7 @@ package com.sevtinge.hyperceiler.hook.utils
 import android.annotation.SuppressLint
 import android.content.res.XResources
 import com.sevtinge.hyperceiler.hook.utils.log.XposedLogUtils
+import com.sevtinge.hyperceiler.hook.utils.reflect.ReflectUtils
 import dalvik.system.BaseDexClassLoader
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
@@ -32,12 +33,8 @@ import de.robv.android.xposed.XposedBridge.hookAllMethods
 import de.robv.android.xposed.XposedBridge.hookMethod
 import de.robv.android.xposed.XposedBridge.invokeOriginalMethod
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.callStaticMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookConstructor
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.XposedHelpers.findClass
-import de.robv.android.xposed.XposedHelpers.findClassIfExists
 import de.robv.android.xposed.XposedHelpers.findField
 import de.robv.android.xposed.XposedHelpers.findFieldIfExists
 import de.robv.android.xposed.XposedHelpers.findFirstFieldByExactType
@@ -46,17 +43,12 @@ import de.robv.android.xposed.XposedHelpers.getBooleanField
 import de.robv.android.xposed.XposedHelpers.getFloatField
 import de.robv.android.xposed.XposedHelpers.getIntField
 import de.robv.android.xposed.XposedHelpers.getLongField
-import de.robv.android.xposed.XposedHelpers.getObjectField
-import de.robv.android.xposed.XposedHelpers.getStaticObjectField
-import de.robv.android.xposed.XposedHelpers.newInstance
 import de.robv.android.xposed.XposedHelpers.removeAdditionalInstanceField
 import de.robv.android.xposed.XposedHelpers.setAdditionalInstanceField
 import de.robv.android.xposed.XposedHelpers.setBooleanField
 import de.robv.android.xposed.XposedHelpers.setFloatField
 import de.robv.android.xposed.XposedHelpers.setIntField
 import de.robv.android.xposed.XposedHelpers.setLongField
-import de.robv.android.xposed.XposedHelpers.setObjectField
-import de.robv.android.xposed.XposedHelpers.setStaticObjectField
 import de.robv.android.xposed.callbacks.XC_LayoutInflated
 import io.github.kyuubiran.ezxhelper.core.ClassLoaderProvider.classLoader
 import java.lang.reflect.Field
@@ -293,16 +285,17 @@ fun Any.removeAdditionalInstanceField(
     field: String
 ): Any? = removeAdditionalInstanceField(this, field)
 
-fun Any.getObjectField(field: String?): Any? = getObjectField(this, field)
+fun Any.getObjectField(field: String?): Any? =
+    if (field == null) null else ReflectUtils.getObjectField(this, field)
 
 fun Any.getObjectFieldOrNull(field: String?): Any? = runCatchingOrNull {
-    getObjectField(this, field)
+    if (field == null) null else ReflectUtils.getObjectField(this, field)
 }
 
-fun <T> Any.getObjectFieldAs(field: String?) = getObjectField(this, field) as T
+fun <T> Any.getObjectFieldAs(field: String?) = getObjectField(field) as T
 
 fun <T> Any.getObjectFieldOrNullAs(field: String?) = runCatchingOrNull {
-    getObjectField(this, field) as T
+    getObjectField(field) as T
 }
 
 fun Any.getIntField(field: String?) = getIntField(this, field)
@@ -330,47 +323,49 @@ fun Any.getBooleanFieldOrNull(field: String?) = runCatchingOrNull {
 }
 
 fun Any.callMethod(methodName: String?, vararg args: Any?): Any? =
-    callMethod(this, methodName, *args)
+    if (methodName == null) null else ReflectUtils.callMethod(this, methodName, *args)
 
 fun Any.callMethodOrNull(methodName: String?, vararg args: Any?): Any? = runCatchingOrNull {
-    callMethod(this, methodName, *args)
+    if (methodName == null) null else ReflectUtils.callMethod(this, methodName, *args)
 }
 
 fun Class<*>.callStaticMethod(methodName: String?, vararg args: Any?): Any? =
-    callStaticMethod(this, methodName, *args)
+    if (methodName == null) null else ReflectUtils.callStaticMethod(this, methodName, *args)
 
 fun Class<*>.callStaticMethodOrNull(methodName: String?, vararg args: Any?): Any? =
     runCatchingOrNull {
-        callStaticMethod(this, methodName, *args)
+        if (methodName == null) null else ReflectUtils.callStaticMethod(this, methodName, *args)
     }
 
 fun <T> Class<*>.callStaticMethodAs(methodName: String?, vararg args: Any?) =
-    callStaticMethod(this, methodName, *args) as T
+    if (methodName == null) null as T else ReflectUtils.callStaticMethod(this, methodName, *args) as T
 
 fun <T> Class<*>.callStaticMethodOrNullAs(methodName: String?, vararg args: Any?) =
     runCatchingOrNull {
-        callStaticMethod(this, methodName, *args) as T
+        if (methodName == null) null as T else ReflectUtils.callStaticMethod(this, methodName, *args) as T
     }
 
-fun <T> Class<*>.getStaticObjectFieldAs(field: String?) = getStaticObjectField(this, field) as T
+fun <T> Class<*>.getStaticObjectFieldAs(field: String?) =
+    (if (field == null) null else ReflectUtils.getStaticObjectField(this, field)) as T
 
 fun <T> Class<*>.getStaticObjectFieldOrNullAs(field: String?) = runCatchingOrNull {
-    getStaticObjectField(this, field) as T
+    (if (field == null) null else ReflectUtils.getStaticObjectField(this, field)) as T
 }
 
-fun Class<*>.getStaticObjectField(field: String?): Any? = getStaticObjectField(this, field)
+fun Class<*>.getStaticObjectField(field: String?): Any? =
+    if (field == null) null else ReflectUtils.getStaticObjectField(this, field)
 
 fun Class<*>.getStaticObjectFieldOrNull(field: String?): Any? = runCatchingOrNull {
-    getStaticObjectField(this, field)
+    if (field == null) null else ReflectUtils.getStaticObjectField(this, field)
 }
 
 fun Class<*>.setStaticObjectField(field: String?, obj: Any?) = apply {
-    setStaticObjectField(this, field, obj)
+    if (field != null) ReflectUtils.setStaticObjectField(this, field, obj)
 }
 
 fun Class<*>.setStaticObjectFieldIfExist(field: String?, obj: Any?) = apply {
     try {
-        setStaticObjectField(this, field, obj)
+        if (field != null) ReflectUtils.setStaticObjectField(this, field, obj)
     } catch (ignored: Throwable) {
     }
 }
@@ -399,39 +394,67 @@ inline fun <reified T> Class<*>.findFieldByExactType(): Field? =
 fun Class<*>.findFieldByExactType(type: Class<*>): Field? = findFirstFieldByExactType(this, type)
 
 fun <T> Any.callMethodAs(methodName: String?, vararg args: Any?) =
-    callMethod(this, methodName, *args) as T
+    if (methodName == null) null as T else ReflectUtils.callMethod(this, methodName, *args) as T
 
 fun <T> Any.callMethodOrNullAs(methodName: String?, vararg args: Any?) = runCatchingOrNull {
-    callMethod(this, methodName, *args) as T
+    if (methodName == null) null as T else ReflectUtils.callMethod(this, methodName, *args) as T
 }
 
 fun Any.callMethod(methodName: String?, parameterTypes: Array<Class<*>>, vararg args: Any?): Any? =
-    callMethod(this, methodName, parameterTypes, *args)
+    if (methodName == null) null else run {
+        var c: Class<*>? = this.javaClass
+        var m: java.lang.reflect.Method? = null
+        while (c != null && m == null) {
+            try {
+                m = c.getDeclaredMethod(methodName, *parameterTypes)
+                m.isAccessible = true
+            } catch (_: Throwable) {
+                c = c.superclass
+            }
+        }
+        m?.invoke(this, *args)
+    }
 
 fun Any.callMethodOrNull(
     methodName: String?, parameterTypes: Array<Class<*>>, vararg args: Any?
 ): Any? = runCatchingOrNull {
-    callMethod(this, methodName, parameterTypes, *args)
+    callMethod(methodName, parameterTypes, *args)
 }
 
 fun Class<*>.callStaticMethod(
     methodName: String?, parameterTypes: Array<Class<*>>, vararg args: Any?
-): Any? = callStaticMethod(this, methodName, parameterTypes, *args)
+): Any? = if (methodName == null) null else run {
+    var c: Class<*>? = this
+    var m: java.lang.reflect.Method? = null
+    while (c != null && m == null) {
+        try {
+            m = c.getDeclaredMethod(methodName, *parameterTypes)
+            m.isAccessible = true
+        } catch (_: Throwable) {
+            c = c.superclass
+        }
+    }
+    m?.invoke(null, *args)
+}
 
 fun Class<*>.callStaticMethodOrNull(
     methodName: String?, parameterTypes: Array<Class<*>>, vararg args: Any?
 ): Any? = runCatchingOrNull {
-    callStaticMethod(this, methodName, parameterTypes, *args)
+    callStaticMethod(methodName, parameterTypes, *args)
 }
 
-fun String.findClass(): Class<*> = findClass(this, classLoader)
+fun String.findClass(): Class<*> = ReflectUtils.findClass(this, classLoader)
 
-fun String.findClassOrNull(): Class<*>? = findClassIfExists(this, classLoader)
+fun String.findClassOrNull(): Class<*>? = ReflectUtils.findClassIfExists(this, classLoader)
 
-fun Class<*>.new(vararg args: Any?): Any = newInstance(this, *args)
+fun Class<*>.new(vararg args: Any?): Any = ReflectUtils.newInstance(this, *args)
 
 fun Class<*>.new(parameterTypes: Array<Class<*>>, vararg args: Any?): Any =
-    newInstance(this, parameterTypes, *args)
+    run {
+        val ctor = getDeclaredConstructor(*parameterTypes)
+        ctor.isAccessible = true
+        ctor.newInstance(*args)
+    }
 
 fun Class<*>.findField(field: String?): Field = findField(this, field)
 
@@ -460,7 +483,9 @@ fun <T> T.setBooleanField(field: String?, value: Boolean) = apply {
 }
 
 fun <T> T.setObjectField(field: String?, value: Any?) = apply {
-    setObjectField(this, field, value)
+    if (field != null) {
+        ReflectUtils.setObjectField(this, field, value)
+    }
 }
 
 inline fun XResources.hookLayout(

@@ -22,19 +22,19 @@ import android.content.Context
 import android.util.ArrayMap
 import com.sevtinge.hyperceiler.hook.module.rules.systemui.base.api.BaseReflectObject
 import com.sevtinge.hyperceiler.hook.utils.api.invokeMethod
-import com.sevtinge.hyperceiler.hook.utils.callMethod
-import com.sevtinge.hyperceiler.hook.utils.callStaticMethodAs
-import com.sevtinge.hyperceiler.hook.utils.getObjectField
-import com.sevtinge.hyperceiler.hook.utils.getObjectFieldAs
 import com.sevtinge.hyperceiler.hook.utils.log.XposedLogUtils.logI
-import de.robv.android.xposed.XposedHelpers
+import com.sevtinge.hyperceiler.hook.utils.reflect.ReflectUtils
+import com.sevtinge.hyperceiler.hook.utils.reflect.callMethod
+import com.sevtinge.hyperceiler.hook.utils.reflect.callStaticMethodAs
+import com.sevtinge.hyperceiler.hook.utils.reflect.getObjectField
+import com.sevtinge.hyperceiler.hook.utils.reflect.getObjectFieldAs
 
 object PackageWatchdog {
     private lateinit var classLoader: ClassLoader
 
     private val PACKAGE_WATCHDOG by lazy {
         logI(classLoader.toString())
-        XposedHelpers.findClass("com.android.server.PackageWatchdog", classLoader)
+        ReflectUtils.findClass("com.android.server.PackageWatchdog", classLoader)
     }
 
     fun getInstance(context: Context): Stub = Stub(

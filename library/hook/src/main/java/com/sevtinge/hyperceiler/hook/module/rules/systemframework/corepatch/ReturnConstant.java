@@ -18,25 +18,25 @@
 */
 package com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch;
 
+import com.sevtinge.hyperceiler.hook.utils.prefs.PrefsUtils;
+
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 
 public class ReturnConstant extends XC_MethodHook {
-    private final XSharedPreferences prefs;
     private final String prefsKey;
+    private final boolean defaultEnabled;
     private final Object value;
 
-    public ReturnConstant(XSharedPreferences prefs, String prefsKey, Object value) {
-        this.prefs = prefs;
+    public ReturnConstant(String prefsKey, boolean defaultEnabled, Object value) {
         this.prefsKey = prefsKey;
+        this.defaultEnabled = defaultEnabled;
         this.value = value;
     }
 
     @Override
     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
         super.beforeHookedMethod(param);
-        prefs.reload();
-        if (prefs.getBoolean(prefsKey, true)) {
+        if (PrefsUtils.mPrefsMap.getBoolean(prefsKey, defaultEnabled)) {
             param.setResult(value);
         }
     }

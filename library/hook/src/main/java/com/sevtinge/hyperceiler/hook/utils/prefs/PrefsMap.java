@@ -54,4 +54,10 @@ public class PrefsMap<K, V> extends HashMap<K, V> {
         return get(key) != null && (Boolean) get(key);
     }
 
+    public boolean getBoolean(String key, boolean defValue) {
+        key = "prefs_key_" + key;
+        Object value = get(key);
+        return value == null ? defValue : (Boolean) value;
+    }
+
 }

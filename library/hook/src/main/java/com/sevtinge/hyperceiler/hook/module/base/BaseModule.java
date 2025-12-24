@@ -22,9 +22,9 @@ import static java.util.Arrays.asList;
 
 import com.hchen.hooktool.HCBase;
 import com.hchen.hooktool.HCInit;
-import com.sevtinge.hyperceiler.hook.XposedInit;
 import com.sevtinge.hyperceiler.hook.module.base.dexkit.DexKit;
 import com.sevtinge.hyperceiler.hook.module.base.tool.AppsTool;
+import com.sevtinge.hyperceiler.hook.module.base.tool.ResourcesTool;
 import com.sevtinge.hyperceiler.hook.safe.CrashData;
 import com.sevtinge.hyperceiler.hook.utils.ContextUtils;
 import com.sevtinge.hyperceiler.hook.utils.api.ProjectApi;
@@ -66,7 +66,10 @@ public abstract class BaseModule {
                 boolean isAndroid = "android".equals(lpparam.packageName);
                 ContextUtils.getWaitContext(context -> {
                     if (context != null) {
-                        XposedInit.mResHook.loadModuleRes(context);
+                                ResourcesTool resTool = ResourcesTool.getInstance();
+                                if (resTool != null) {
+                                    resTool.loadModuleRes(context);
+                                }
                     }
                 }, isAndroid);
             }

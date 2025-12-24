@@ -20,11 +20,11 @@ package com.sevtinge.hyperceiler.utils;
 
 import static com.sevtinge.hyperceiler.hook.utils.api.ProjectApi.isRelease;
 import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.IS_LOGGER_ALIVE;
-import static com.sevtinge.hyperceiler.utils.XposedActivateHelper.isModuleActive;
 
 import android.content.Context;
 
 import com.sevtinge.hyperceiler.common.utils.DialogHelper;
+import com.sevtinge.hyperceiler.hook.module.base.manager.ServiceManager;
 import com.sevtinge.hyperceiler.hook.utils.prefs.PrefsUtils;
 
 public class LogServiceUtils {
@@ -40,7 +40,7 @@ public class LogServiceUtils {
     }
 
     private static boolean showLogServiceWarn() {
-        return !IS_LOGGER_ALIVE && isModuleActive && !isRelease() &&
+        return !IS_LOGGER_ALIVE && ServiceManager.isModuleActivated() && !isRelease() &&
             !PrefsUtils.mSharedPreferences.getBoolean("prefs_key_development_close_log_alert_dialog", false);
     }
 }
