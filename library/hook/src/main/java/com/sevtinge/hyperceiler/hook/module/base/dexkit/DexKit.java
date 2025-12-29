@@ -342,9 +342,9 @@ public class DexKit {
         executor.submit(() -> {
             for (String folderName : folderNames) {
                 try {
-                    String folderPath = "/data/data/" + folderName + "/files/hyperceiler/dexkit_cache.json";
+                    String folderPath = "/data/data/" + folderName + "/files/hyperceiler";
                     rootExecCmd("rm -f " + folderPath);
-                    folderPath = "/data/user_de/0/" + folderName + "/files/hyperceiler/dexkit_cache.json";
+                    folderPath = "/data/user_de/0/" + folderName + "/files/hyperceiler";
                     rootExecCmd("rm -f " + folderPath);
                 } catch (Throwable t) {
                     XposedLogUtils.logW(TAG, "Failed to delete cache for " + folderName + ": " + t.getMessage(), t);
