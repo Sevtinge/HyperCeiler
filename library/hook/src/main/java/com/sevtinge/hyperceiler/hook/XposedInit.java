@@ -33,6 +33,7 @@ import static com.sevtinge.hyperceiler.hook.utils.prefs.PrefsUtils.mPrefsMap;
 import android.os.Process;
 
 import com.hchen.hooktool.HCInit;
+import com.sevtinge.hyperceiler.hook.module.app.VariousSystemApps;
 import com.sevtinge.hyperceiler.hook.module.app.VariousThirdApps;
 import com.sevtinge.hyperceiler.hook.module.base.BaseModule;
 import com.sevtinge.hyperceiler.hook.module.base.tool.ResourcesTool;
@@ -68,6 +69,7 @@ public class XposedInit implements IXposedHookZygoteInit, IXposedHookLoadPackage
 
     // public static XmlTool mXmlTool;
     public final VariousThirdApps mVariousThirdApps = new VariousThirdApps();
+    public final VariousSystemApps mVariousSystemApps = new VariousSystemApps();
 
     @Override
     public void initZygote(StartupParam startupParam) {
@@ -169,6 +171,7 @@ public class XposedInit implements IXposedHookZygoteInit, IXposedHookLoadPackage
         HashMap<String, DataBase> dataMap = DataBase.get();
         if (dataMap.values().stream().noneMatch(dataBase -> dataBase.mTargetPackage.equals(mPkgName))) {
             mVariousThirdApps.init(lpparam);
+            mVariousSystemApps.init(lpparam);
             return;
         }
 

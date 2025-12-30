@@ -26,7 +26,9 @@ import static de.robv.android.xposed.XposedHelpers.getObjectField;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.text.InputFilter;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 
@@ -34,6 +36,7 @@ import com.sevtinge.hyperceiler.hook.module.base.BaseHook;
 import com.sevtinge.hyperceiler.hook.module.base.dexkit.DexKit;
 import com.sevtinge.hyperceiler.hook.module.base.dexkit.IDexKit;
 
+import org.json.JSONArray;
 import org.luckypray.dexkit.DexKitBridge;
 import org.luckypray.dexkit.query.FindField;
 import org.luckypray.dexkit.query.FindMethod;
@@ -45,6 +48,10 @@ import org.luckypray.dexkit.result.base.BaseData;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import de.robv.android.xposed.XposedHelpers;
 
 /**
  * 解除常用语 20 条限制和字数限制
@@ -56,6 +63,47 @@ public class NewUnPhraseLimit extends BaseHook {
 
     @Override
     public void init() {
+        Method method = DexKit.findMember("BuildClipboardJson", new IDexKit() {
+            @Override
+            public BaseData dexkit(DexKitBridge bridge) throws ReflectiveOperationException {
+                MethodData methodData = bridge.findMethod(FindMethod.create()
+                    .matcher(MethodMatcher.create()
+                        .usingStrings("get savedList size :")
+                    )).singleOrNull();
+                return methodData;
+            }
+        });
+        hookMethod(method, new MethodHook() {
+            @Override
+            protected void before(MethodHookParam param) throws Throwable {
+                Object newModel = param.args[2];
+                String oldJson = (String) param.args[3];
+
+                JSONArray jsonArray = new JSONArray();
+                ArrayList<Object> list = new ArrayList<>();
+
+                if (newModel != null) {
+                    list.add(newModel);
+                }
+
+                if (!TextUtils.isEmpty(oldJson)) {
+                    Class<?> mgrCls = XposedHelpers.findClass("com.miui.inputmethod.MiuiClipboardManager", lpparam.classLoader);
+                    List<?> oldList = (List<?>) XposedHelpers.callStaticMethod(mgrCls, "jsonToBeanList", oldJson);
+                    list.addAll(oldList);
+                }
+
+                logD("ClipboardLimit", "l4 ready " + list.size());
+
+                for (int i = 0; i < list.size(); i++) {
+                    Object model = list.get(i);
+                    Object jsonObj = XposedHelpers.callMethod(model, "toJSONObject");
+                    jsonArray.put(jsonObj);
+                }
+
+                param.setResult(jsonArray.toString());
+            }
+        });
+
         // 解除 20 条限制
         Class<?> InputMethodUtil = findClass("com.miui.inputmethod.InputMethodUtil");
         setStaticField(InputMethodUtil, "sPhraseListSize", 0);
@@ -79,7 +127,7 @@ public class NewUnPhraseLimit extends BaseHook {
         });
 
         // 解除字数限制
-        Method method = DexKit.findMember("phrase$1", new IDexKit() {
+        Method method1 = DexKit.findMember("phrase$1", new IDexKit() {
             @Override
             public BaseData dexkit(DexKitBridge bridge) throws ReflectiveOperationException {
                 MethodData methodData = bridge.findMethod(FindMethod.create()
@@ -106,7 +154,7 @@ public class NewUnPhraseLimit extends BaseHook {
                 ).single();
             }
         });
-        hookMethod(method, new MethodHook() {
+        hookMethod(method1, new MethodHook() {
                 @Override
                 protected void after(MethodHookParam param) throws Throwable {
                     EditText editText = (EditText) getObjectField(param.thisObject, field.getName());
