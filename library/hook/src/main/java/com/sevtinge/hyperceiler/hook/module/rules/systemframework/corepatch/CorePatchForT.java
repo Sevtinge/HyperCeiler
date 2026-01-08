@@ -21,7 +21,9 @@ package com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch;
 import android.content.pm.Signature;
 
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;

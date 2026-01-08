@@ -484,7 +484,7 @@ fun <T> T.setBooleanField(field: String?, value: Boolean) = apply {
 
 fun <T> T.setObjectField(field: String?, value: Any?) = apply {
     if (field != null) {
-        ReflectUtils.setObjectField(this, field, value)
+        ReflectUtils.setObjectField(this!!, field, value)
     }
 }
 

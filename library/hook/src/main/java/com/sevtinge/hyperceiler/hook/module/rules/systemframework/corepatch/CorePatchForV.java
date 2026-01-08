@@ -18,7 +18,11 @@
  */
 package com.sevtinge.hyperceiler.hook.module.rules.systemframework.corepatch;
 
+import java.lang.reflect.InvocationTargetException;
+
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class CorePatchForV extends CorePatchForU {
 

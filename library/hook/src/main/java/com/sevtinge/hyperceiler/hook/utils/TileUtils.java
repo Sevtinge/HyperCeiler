@@ -14,16 +14,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2025 HyperCeiler Contributions
+ * Copyright (C) 2023-2026 HyperCeiler Contributions
  */
 package com.sevtinge.hyperceiler.hook.utils;
+
+import static com.sevtinge.hyperceiler.hook.utils.devicesdk.MiDeviceAppUtilsKt.isPad;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.util.ArrayMap;
-import android.view.View;
 import android.widget.Switch;
 
 import androidx.annotation.CallSuper;
@@ -31,9 +32,9 @@ import androidx.annotation.CallSuper;
 import com.sevtinge.hyperceiler.hook.R;
 import com.sevtinge.hyperceiler.hook.module.base.BaseHook;
 import com.sevtinge.hyperceiler.hook.module.base.tool.OtherTool;
-import com.sevtinge.hyperceiler.hook.utils.reflect.ReflectUtils;
 
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam;
+import de.robv.android.xposed.XposedHelpers;
 
 public abstract class TileUtils extends BaseHook {
     private static final String mQSFactoryClsName = "com.android.systemui.qs.tileimpl.MiuiQSFactory";
@@ -69,7 +70,7 @@ public abstract class TileUtils extends BaseHook {
             findAndHookMethod(myTile, "isAvailable", new MethodHook() {
                 @Override
                 protected void before(MethodHookParam param) {
-                        String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+                    String tileName = (String) XposedHelpers.getAdditionalInstanceField(param.thisObject, "customName");
                     if (tileName != null) {
                         if (tileName.equals(customName())) {
                             tileCheck(param, tileName);
@@ -104,7 +105,7 @@ public abstract class TileUtils extends BaseHook {
                         if (needOverride())
                             tileListening(param, tileName);
                     }
-                                            String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+                }
             });
         } catch (NoSuchMethodException e) {
             logE(TAG, "com.android.systemui", "Don't Have handleSetListening: " + e);
@@ -235,7 +236,7 @@ public abstract class TileUtils extends BaseHook {
     // }
 
     /*需要 Hook 的磁贴 Class*/
-                    String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+    public Class<?> customClass() {
         return null;
     }
 
@@ -291,7 +292,7 @@ public abstract class TileUtils extends BaseHook {
             }*/
             try {
                 findClassIfExists("com.android.systemui.SystemUIApplication").getDeclaredMethod("onCreate");
-                            String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+                findAndHookMethod("com.android.systemui.SystemUIApplication", "onCreate", new MethodHook() {
                     @Override
                     protected void after(MethodHookParam param) {
                         if (!isListened[0]) {
@@ -301,9 +302,9 @@ public abstract class TileUtils extends BaseHook {
                             // 获取 miui_quick_settings_tiles_stock 字符串的值
                             @SuppressLint("DiscouragedApi") int stockTilesResId = mContext.getResources().getIdentifier("miui_quick_settings_tiles_stock", "string", lpparam.packageName);
                             String stockTiles = mContext.getString(stockTilesResId) + "," + custom; // 追加自定义的磁贴
-                                Context context = (Context) ReflectUtils.getObjectField(param.thisObject, "mContext");
-                                Object o = ReflectUtils.callStaticMethod(findClassIfExists("com.android.systemui.controlcenter.utils.ControlCenterUtils"), "getSettingsSplitIntent", context, intent);
-                                ReflectUtils.callMethod(ReflectUtils.getObjectField(param.thisObject, "mActivityStarter"), "postStartActivityDismissingKeyguard", o, 0, null);
+                            // 将拼接后的字符串分别替换下面原有的字符串。
+                            if (isPad()) {
+                                setObjectReplacement(lpparam.packageName, "string", "miui_quick_settings_tiles_stock_pad", stockTiles);
                                 setObjectReplacement("miui.systemui.plugin", "string", "miui_quick_settings_tiles_stock_pad", stockTiles);
                                 setObjectReplacement("miui.systemui.plugin", "string", "quick_settings_tiles_stock", stockTiles);
                             } else {
@@ -327,7 +328,7 @@ public abstract class TileUtils extends BaseHook {
             protected void before(MethodHookParam param) {
                 String tileName = (String) param.args[0];
                 if (tileName.equals(customName())) {
-                        String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+                    String myTileProvider = getCustomTileProvider()[0];
                     Object provider = XposedHelpers.getObjectField(param.thisObject, myTileProvider);
                     Object tile = XposedHelpers.callMethod(provider, "get");
                     XposedHelpers.setAdditionalInstanceField(tile, "customName", tileName);
@@ -347,7 +348,7 @@ public abstract class TileUtils extends BaseHook {
                         @Override
                         protected void before(MethodHookParam param) {
                             String tileName = (String) param.args[0];
-                            String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+                            if (tileName.equals(customName())) {
                                 String myTileProvider = getCustomTileProvider()[0];
                                 Object provider;
                                 Object tile;
@@ -476,7 +477,7 @@ public abstract class TileUtils extends BaseHook {
     public Intent tileHandleLongClick(MethodHookParam param, String tileName) {
         return null;
     }
-                String tileName = (String) AdditionalFieldStore.get(param.thisObject, "customName");
+
     /*这个方法用于设置单击磁贴的动作*/
     public void tileClick(MethodHookParam param, String tileName) {
     }
@@ -486,12 +487,7 @@ public abstract class TileUtils extends BaseHook {
     }
 
     /*这个方法用于设置更新磁贴状态*/
-                            ReflectUtils.setObjectField(booleanState, "value", isEnable);
+    public ArrayMap<String, Integer> tileUpdateState(MethodHookParam param, Class<?> mResourceIcon, String tileName) {
         return null;
-                            ReflectUtils.setObjectField(booleanState, "state", isEnable ? 2 : 1);
-                            String tileLabel = (String) ReflectUtils.callMethod(param.thisObject, "getTileLabel");
-                            ReflectUtils.setObjectField(booleanState, "label", tileLabel);
-                            ReflectUtils.setObjectField(booleanState, "contentDescription", tileLabel);
-                            ReflectUtils.setObjectField(booleanState, "expandedAccessibilityClassName", Switch.class.getName());
-                            Object mIcon = ReflectUtils.callStaticMethod(mResourceIcon, "get", isEnable ? tileResMap.get(customName() + "_ON") : tileResMap.get(customName() + "_OFF"));
-                            ReflectUtils.setObjectField(booleanState, "icon", mIcon);
+    }
+}
