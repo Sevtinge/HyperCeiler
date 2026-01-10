@@ -134,7 +134,7 @@ object DockCustomNew : BaseHook() {
                 } else {
                     false
                 }
-                
+
                 dockBlurView?.addBlur()
             }
         }

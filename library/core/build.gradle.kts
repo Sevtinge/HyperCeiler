@@ -37,5 +37,6 @@ java {
 
 dependencies {
     api(projects.library.hook)
+    api(projects.library.libhook)
     api(projects.library.provision)
 }
