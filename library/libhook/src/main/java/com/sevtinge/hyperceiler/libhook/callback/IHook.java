@@ -19,11 +19,13 @@
 package com.sevtinge.hyperceiler.libhook.callback;
 
 import com.sevtinge.hyperceiler.libhook.base.BaseLoad;
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.HookTool;
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ReflectUtils;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ResourcesTool;
+import com.sevtinge.hyperceiler.libhook.utils.log.XposedLog;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedInterface.Hooker;
@@ -51,87 +53,139 @@ public interface IHook {
     }
 
     default XposedInterface xposed() {
-        return HookTool.getXposed();
+        return BaseLoad.getXposed();
     }
 
     // ==================== 类查找 ====================
 
     default Class<?> findClass(String className) {
-        return HookTool.findClass(className, getClassLoader());
+        return ReflectUtils.findClass(className, getClassLoader());
     }
 
     default Class<?> findClassIfExists(String className) {
-        return HookTool.findClassIfExists(className, getClassLoader());
+        return ReflectUtils.findClassIfExists(className, getClassLoader());
     }
 
     // ==================== 字段操作 ====================
 
     default Object getObjectField(Object obj, String fieldName) {
-        return HookTool.getObjectField(obj, fieldName);
+        return ReflectUtils.getObjectField(obj, fieldName);
     }
 
     default void setObjectField(Object obj, String fieldName, Object value) {
-        HookTool.setObjectField(obj, fieldName, value);
+        ReflectUtils.setObjectField(obj, fieldName, value);
     }
 
     default Object getStaticObjectField(Class<?> clazz, String fieldName) {
-        return HookTool.getStaticObjectField(clazz, fieldName);
+        return ReflectUtils.getStaticObjectField(clazz, fieldName);
     }
 
     default void setStaticObjectField(Class<?> clazz, String fieldName, Object value) {
-        HookTool.setStaticObjectField(clazz, fieldName, value);
+        ReflectUtils.setStaticObjectField(clazz, fieldName, value);
     }
 
     // ==================== 方法调用 ====================
 
     default Object callMethod(Object obj, String methodName, Object... args) {
-        return HookTool.callMethod(obj, methodName, args);
+        return ReflectUtils.callMethod(obj, methodName, args);
     }
 
     default Object callStaticMethod(Class<?> clazz, String methodName, Object... args) {
-        return HookTool.callStaticMethod(clazz, methodName, args);
+        return ReflectUtils.callStaticMethod(clazz, methodName, args);
     }
 
     // ==================== Hook 方法 ====================
 
     default MethodUnhooker<Method> hook(Method method, Class<? extends Hooker> hooker) {
-        return HookTool.hook(method, hooker);
+        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
+        return xposed().hook(method, hooker);
     }
 
+    @SuppressWarnings("unchecked")
     default MethodUnhooker<Constructor<?>> hook(Constructor<?> constructor, Class<? extends Hooker> hooker) {
-        return HookTool.hook(constructor, hooker);
+        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
+        return (MethodUnhooker<Constructor<?>>) (MethodUnhooker<?>) xposed().hook(constructor, hooker);
     }
 
     default MethodUnhooker<Method> findAndHookMethod(Class<?> clazz, String methodName, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        return HookTool.findAndHookMethod(clazz, methodName, hooker, parameterTypes);
+        if (clazz == null) throw new IllegalArgumentException("clazz == null");
+        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
+
+        Method target = findMethodInHierarchy(clazz, methodName, parameterTypes);
+        if (target == null) {
+            throw new NoSuchMethodError(clazz.getName() + "#" + methodName + Arrays.toString(parameterTypes));
+        }
+        return xposed().hook(target, hooker);
     }
 
     default MethodUnhooker<Method> findAndHookMethod(String className, String methodName, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        return HookTool.findAndHookMethod(className, getClassLoader(), methodName, hooker, parameterTypes);
+        Class<?> clazz = findClassIfExists(className);
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class not found: " + className);
+        }
+        return findAndHookMethod(clazz, methodName, hooker, parameterTypes);
     }
 
+    @SuppressWarnings("unchecked")
     default MethodUnhooker<Constructor<?>> findAndHookConstructor(Class<?> clazz, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        return HookTool.findAndHookConstructor(clazz, hooker, parameterTypes);
+        if (clazz == null) throw new IllegalArgumentException("clazz == null");
+        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
+
+        Constructor<?> ctor = findConstructorExact(clazz, parameterTypes);
+        if (ctor == null) {
+            throw new NoSuchMethodError(clazz.getName() + "<init>" + Arrays.toString(parameterTypes));
+        }
+        return (MethodUnhooker<Constructor<?>>) (MethodUnhooker<?>) xposed().hook(ctor, hooker);
     }
 
     default MethodUnhooker<Constructor<?>> findAndHookConstructor(String className, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        return HookTool.findAndHookConstructor(className, getClassLoader(), hooker, parameterTypes);
+        Class<?> clazz = findClassIfExists(className);
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class not found: " + className);
+        }
+        return findAndHookConstructor(clazz, hooker, parameterTypes);
     }
 
     default void hookAllMethods(Class<?> clazz, String methodName, Class<? extends Hooker> hooker) {
-        HookTool.hookAllMethods(clazz, methodName, hooker);
+        if (clazz == null || xposed() == null) return;
+        for (Method m : clazz.getDeclaredMethods()) {
+            if (m.getName().equals(methodName)) {
+                try {
+                    xposed().hook(m, hooker);
+                } catch (Throwable t) {
+                    XposedLog.e("IHook", "hookAllMethods failed: " + clazz.getName() + "#" + methodName, t);
+                }
+            }
+        }
     }
 
     default void hookAllMethods(String className, String methodName, Class<? extends Hooker> hooker) {
-        HookTool.hookAllMethods(className, getClassLoader(), methodName, hooker);
+        Class<?> clazz = findClassIfExists(className);
+        if (clazz == null) {
+            XposedLog.w("IHook", "hookAllMethods: class not found: " + className);
+            return;
+        }
+        hookAllMethods(clazz, methodName, hooker);
     }
 
     default void hookAllConstructors(Class<?> clazz, Class<? extends Hooker> hooker) {
-        HookTool.hookAllConstructors(clazz, hooker);
+        if (clazz == null || xposed() == null) return;
+        for (Constructor<?> c : clazz.getDeclaredConstructors()) {
+            try {
+                xposed().hook(c, hooker);
+            } catch (Throwable t) {
+                XposedLog.e("IHook", "hookAllConstructors failed: " + clazz.getName(), t);
+            }
+        }
     }
 
     default void hookAllConstructors(String className, Class<? extends Hooker> hooker) {
-        HookTool.hookAllConstructors(className, getClassLoader(), hooker);
+        Class<?> clazz = findClassIfExists(className);
+        if (clazz == null) {
+            XposedLog.w("IHook", "hookAllConstructors: class not found: " + className);
+            return;
+        }
+        hookAllConstructors(clazz, hooker);
     }
 
     // ==================== 资源 Hook ====================
@@ -159,5 +213,29 @@ public interface IHook {
         if (resTool != null) {
             resTool.setObjectReplacement(pkg, type, name, replacementResValue);
         }
+    }
+
+    private static Method findMethodInHierarchy(Class<?> clazz, String methodName, Class<?>[] paramTypes) {
+        Class<?> c = clazz;
+        while (c != null) {
+            try {
+                Method m = c.getDeclaredMethod(methodName, paramTypes);
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException ignored) {
+            }
+            c = c.getSuperclass();
+        }
+        return null;
+    }
+
+    private static Constructor<?> findConstructorExact(Class<?> clazz, Class<?>[] paramTypes) {
+        try {
+            Constructor<?> c = clazz.getDeclaredConstructor(paramTypes);
+            c.setAccessible(true);
+            return c;
+        } catch (NoSuchMethodException ignored) {
+        }
+        return null;
     }
 }

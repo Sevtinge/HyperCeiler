@@ -18,12 +18,16 @@
  */
 package com.sevtinge.hyperceiler.libhook.utils.devices
 
+import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.BlendMode
 import android.graphics.BlendModeColorFilter
 import android.os.Build
+import com.sevtinge.hyperceiler.expansion.utils.TokenUtils.getDeviceToken
 import com.sevtinge.hyperceiler.libhook.utils.api.PropUtils.getProp
 import com.sevtinge.hyperceiler.libhook.utils.shell.ShellUtils.rootExecCmd
+import io.github.kyuubiran.ezxhelper.xposed.EzXposed.appContext
 import java.util.Locale
 
 fun getFingerPrint(): String = Build.FINGERPRINT
@@ -38,13 +42,35 @@ fun getBrand(): String = Build.BRAND
 fun getManufacturer(): String = Build.MANUFACTURER
 fun getModDevice(): String = getProp("ro.product.mod_device")
 fun getCharacteristics(): String = getProp("ro.build.characteristics")
-fun getSerial(): String = rootExecCmd("getprop ro.serialno")?.replace("\n", "") ?: "unknown"
-fun getCpuId(): String = removeLeadingZeros(rootExecCmd("getprop ro.boot.cpuid") ?: "")
+fun getSerial(): String = rootExecCmd("getprop ro.serialno").replace("\n", "")
+fun getCpuId(): String = removeLeadingZeros(rootExecCmd("getprop ro.boot.cpuid"))
+
+fun getDensityDpi(): Int =
+    (appContext.resources.displayMetrics.widthPixels / appContext.resources.displayMetrics.density).toInt()
+
+@SuppressLint("DiscouragedApi")
+fun getCornerRadiusTop(): Int {
+    val resourceId = appContext.resources.getIdentifier(
+        "rounded_corner_radius_top", "dimen", "android"
+    )
+    return if (resourceId > 0) {
+        appContext.resources.getDimensionPixelSize(resourceId)
+    } else 100
+}
 
 fun isTablet(): Boolean = Resources.getSystem().configuration.smallestScreenWidthDp >= 600
-fun isPadDevice(): Boolean = isTablet()
+fun isPadDevice(): Boolean = isTablet() || DeviceType.isFoldable()
+fun isDarkMode(): Boolean =
+    appContext.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 fun colorFilter(colorInt: Int) = BlendModeColorFilter(colorInt, BlendMode.SRC_IN)
 
+fun getDeviceToken(androidId : String): String {
+    val modelName = getModelName()
+    val cpuId = getCpuId()
+    val serial = getSerial()
+
+    return getDeviceToken(modelName, serial, androidId, cpuId)
+}
 
 fun removeLeadingZeros(input: String): String {
     var result = input

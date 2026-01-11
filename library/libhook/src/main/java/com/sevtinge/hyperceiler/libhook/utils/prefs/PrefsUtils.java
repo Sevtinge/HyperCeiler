@@ -18,12 +18,23 @@
  */
 package com.sevtinge.hyperceiler.libhook.utils.prefs;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.sevtinge.hyperceiler.libhook.provider.SharedPrefsProvider;
+import com.sevtinge.hyperceiler.libhook.utils.devices.ProjectApi;
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.AppsTool;
+
+import java.io.File;
+import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import io.github.libxposed.service.RemotePreferences;
 
@@ -32,7 +43,13 @@ public class PrefsUtils {
     public static SharedPreferences mSharedPreferences = null;
     public static RemotePreferences remotePrefs = null;
     public static PrefsMap<String, Object> mPrefsMap = new PrefsMap<>();
+
+    public static String mPrefsPathCurrent = null;
+    public static String mPrefsFileCurrent = null;
     public static String mPrefsName = "hyperceiler_prefs";
+    public static String mPrefsPath = "/data/user_de/0/" + ProjectApi.mAppModulePkg + "/shared_prefs";
+    public static String mPrefsFile = mPrefsPath + "/" + mPrefsName + ".xml";
+
     private static final HashSet<PreferenceObserver> prefObservers = new HashSet<>();
 
     public interface PreferenceObserver {
@@ -49,6 +66,38 @@ public class PrefsUtils {
         }
     }
 
+    public static String getSharedPrefsPath() {
+        if (mPrefsPathCurrent == null) try {
+            Field mFile = mSharedPreferences.getClass().getDeclaredField("mFile");
+            mFile.setAccessible(true);
+            mPrefsPathCurrent = ((File) mFile.get(mSharedPreferences)).getParentFile().getAbsolutePath();
+            return mPrefsPathCurrent;
+        } catch (Throwable t) {
+            return mPrefsPath;
+        }
+        else return mPrefsPathCurrent;
+    }
+
+    public static String getSharedPrefsFile() {
+        if (mPrefsFileCurrent == null) try {
+            Field fFile = mSharedPreferences.getClass().getDeclaredField("mFile");
+            fFile.setAccessible(true);
+            mPrefsFileCurrent = ((File) fFile.get(mSharedPreferences)).getAbsolutePath();
+            return mPrefsFileCurrent;
+        } catch (Throwable t) {
+            return mPrefsFile;
+        }
+        else return mPrefsFileCurrent;
+    }
+
+    public static boolean contains(String key) {
+        return mSharedPreferences.contains(key);
+    }
+
+    public static void putString(String key, String defValue) {
+        mSharedPreferences.edit().putString(key, defValue).apply();
+    }
+
     /**
      * 获取 SharedPreferences Editor
      */
@@ -63,6 +112,7 @@ public class PrefsUtils {
      * 获取 SharedPreferences
      */
     public static SharedPreferences getSharedPrefs(Context context, boolean multiProcess) {
+        context = AppsTool.getProtectedContext(context);
         try {
             return context.getSharedPreferences(mPrefsName, multiProcess ? Context.MODE_MULTI_PROCESS | Context.MODE_WORLD_READABLE : Context.MODE_WORLD_READABLE);
         } catch (Throwable t) {
@@ -117,5 +167,50 @@ public class PrefsUtils {
             else
                 return defValue;
         }
+    }
+
+    /**
+     * 获取 StringSet 类型的偏好设置
+     */
+    public static Set<String> getSharedStringSetPrefs(Context context, String name) {
+        try {
+            SharedPreferences prefs = getSharedPrefs(context);
+            Set<String> result = prefs.getStringSet(name, null);
+            if (result != null) {
+                return result;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        LinkedHashSet<String> empty = new LinkedHashSet<>();
+        if (mPrefsMap.containsKey(name)) {
+            return (Set<String>) mPrefsMap.getObject(name, empty);
+        } else {
+            return empty;
+        }
+    }
+
+    /**
+     * 注册偏好设置变更监听器
+     */
+    public static void registerOnSharedPreferenceChangeListener(Context context) {
+        mSharedPreferences.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+            Log.i("prefs", "Changed: " + key);
+            AppsTool.requestBackup(context);
+            Object val = sharedPreferences.getAll().get(key);
+            String path = "";
+            if (val instanceof String)
+                path = "string/";
+            else if (val instanceof Set<?>)
+                path = "stringset/";
+            else if (val instanceof Integer)
+                path = "integer/";
+            else if (val instanceof Boolean)
+                path = "boolean/";
+
+            ContentResolver resolver = context.getContentResolver();
+            resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/" + path + key), null);
+            if (!path.isEmpty()) resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/pref/" + path + key), null);
+        });
     }
 }

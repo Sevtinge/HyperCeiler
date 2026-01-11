@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.BooleanSupplier;
 
+import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam;
 
 /**
@@ -44,6 +45,15 @@ public abstract class BaseLoad {
     private static volatile ClassLoader sClassLoader;
     private static volatile String sPackageName;
     private static volatile PackageLoadedParam sLpparam;
+    private static volatile XposedInterface sXposed;
+
+    public static void init(XposedInterface xposed) {
+        sXposed = xposed;
+    }
+
+    public static XposedInterface getXposed() {
+        return sXposed;
+    }
 
     public static ClassLoader getClassLoader() {
         synchronized (sLock) {

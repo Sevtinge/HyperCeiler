@@ -27,7 +27,6 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.HookTool;
 import com.sevtinge.hyperceiler.libhook.utils.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.utils.pkg.DebugModeUtils;
 import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils;
@@ -58,7 +57,7 @@ public class XposedInitEntry extends XposedModule {
         super(base, param);
         processName = param.getProcessName();
         XposedLog.init(base);
-        HookTool.init(base);
+        BaseLoad.init(base);
         EzXposed.initXposedModule(base);
     }
 

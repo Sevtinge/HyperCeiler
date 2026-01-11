@@ -34,6 +34,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Pair;
 import android.util.TypedValue;
 
+import com.sevtinge.hyperceiler.libhook.base.BaseLoad;
 import com.sevtinge.hyperceiler.libhook.utils.api.ContextUtils;
 
 import java.io.File;
@@ -211,7 +212,7 @@ public class ResourcesTool {
         if (hooksApplied) return;
         hooksApplied = true;
 
-        XposedInterface xposed = HookTool.getXposed();
+        XposedInterface xposed = BaseLoad.getXposed();
         if (xposed == null) {
             e(TAG, "XposedInterface not initialized!");
             return;
