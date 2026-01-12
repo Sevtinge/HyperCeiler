@@ -31,6 +31,7 @@ object XposedLog {
     private var sXposed: XposedInterface? = null
 
     @Volatile
+    @JvmField
     var logLevel: Int = 3
 
     @JvmStatic
@@ -43,22 +44,22 @@ object XposedLog {
         logLevel = level
     }
 
-    private fun logRaw(msg: String) {
+    private fun logRaw(msg: String? = null, t: Throwable? = null) {
+        if (msg == null && t == null) return
         val xposed = sXposed
-        if (xposed != null) {
-            xposed.log(msg)
-        } else {
-            Log.i(TAG, msg)
+        if (msg != null) {
+            if (xposed != null) {
+                xposed.log(msg)
+            } else {
+                Log.i(TAG, msg)
+            }
         }
-    }
-
-    private fun logRaw(t: Throwable?) {
-        if (t == null) return
-        val xposed = sXposed
-        if (xposed != null) {
-            xposed.log(Log.getStackTraceString(t))
-        } else {
-            Log.e(TAG, "", t)
+        if (t != null) {
+            if (xposed != null) {
+                xposed.log(Log.getStackTraceString(t))
+            } else {
+                Log.e(TAG, "", t)
+            }
         }
     }
 
@@ -77,8 +78,7 @@ object XposedLog {
     @JvmStatic
     fun d(tag: String, msg: String, t: Throwable) {
         if (logLevel < 4) return
-        logRaw("[$TAG][D][$tag]: $msg")
-        logRaw(t)
+        logRaw("[$TAG][D][$tag]: $msg", t)
     }
 
     @JvmStatic
@@ -118,8 +118,7 @@ object XposedLog {
     @JvmStatic
     fun w(tag: String, msg: String, t: Throwable) {
         if (logLevel < 2) return
-        logRaw("[$TAG][W][$tag]: $msg")
-        logRaw(t)
+        logRaw("[$TAG][W][$tag]: $msg", t)
     }
 
     @JvmStatic
@@ -136,11 +135,10 @@ object XposedLog {
     fun w(tag: String, pkg: String?, msg: String, t: Throwable) {
         if (logLevel < 2) return
         if (pkg != null) {
-            logRaw("[$TAG][W][$pkg][$tag]: $msg")
+            logRaw("[$TAG][W][$pkg][$tag]: $msg", t)
         } else {
-            logRaw("[$TAG][W][$tag]: $msg")
+            logRaw("[$TAG][W][$tag]: $msg", t)
         }
-        logRaw(t)
     }
 
     @JvmStatic
@@ -158,15 +156,13 @@ object XposedLog {
     @JvmStatic
     fun e(tag: String, t: Throwable) {
         if (logLevel < 1) return
-        logRaw("[$TAG][E][$tag]: ${t.message}")
-        logRaw(t)
+        logRaw("[$TAG][E][$tag]: ${t.message}", )
     }
 
     @JvmStatic
     fun e(tag: String, msg: String, t: Throwable) {
         if (logLevel < 1) return
-        logRaw("[$TAG][E][$tag]: $msg")
-        logRaw(t)
+        logRaw("[$TAG][E][$tag]: $msg", t)
     }
 
     @JvmStatic
@@ -183,11 +179,10 @@ object XposedLog {
     fun e(tag: String, pkg: String?, msg: String, t: Throwable) {
         if (logLevel < 1) return
         if (pkg != null) {
-            logRaw("[$TAG][E][$pkg][$tag]: $msg")
+            logRaw("[$TAG][E][$pkg][$tag]: $msg", t)
         } else {
-            logRaw("[$TAG][E][$tag]: $msg")
+            logRaw("[$TAG][E][$tag]: $msg", t)
         }
-        logRaw(t)
     }
 
 

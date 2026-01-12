@@ -18,29 +18,30 @@
  */
 package com.sevtinge.hyperceiler.main.page.settings.development;
 
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getBrand;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getDeviceName;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getDeviceToken;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getFingerPrint;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getLanguage;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getLocale;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getMarketName;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getModDevice;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getModelName;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.DeviceSDKKt.getSoc;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.MiDeviceAppUtilsKt.isInternational;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.MiDeviceAppUtilsKt.isLargeUI;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.MiDeviceAppUtilsKt.isPad;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getAndroidVersion;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getBuildDate;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getCurrentUserId;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getHyperOSVersion;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getRootGroupsInfo;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getSmallVersion;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.getSystemVersionIncremental;
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.scanModules;
-import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.IS_LOGGER_ALIVE;
-import static com.sevtinge.hyperceiler.hook.utils.log.LogManager.LOGGER_CHECKER_ERR_CODE;
+import static com.sevtinge.hyperceiler.Application.isModuleActivated;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getBrand;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getDeviceName;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getDeviceToken;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getFingerPrint;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getLanguage;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getLocale;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getMarketName;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getModDevice;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getModelName;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getSoc;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Miui.isInternational;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Miui.isLargeUI;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Miui.isPad;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Module.scanModules;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getAndroidVersion;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getBuildDate;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getCurrentUserId;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getHyperOSVersion;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getRootGroupsInfo;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getSmallVersion;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.getSystemVersionIncremental;
+import static com.sevtinge.hyperceiler.libhook.utils.log.LogManager.IS_LOGGER_ALIVE;
+import static com.sevtinge.hyperceiler.libhook.utils.log.LogManager.LOGGER_CHECKER_ERR_CODE;
 
 import androidx.preference.Preference;
 
@@ -49,11 +50,9 @@ import com.sevtinge.hyperceiler.R;
 import com.sevtinge.hyperceiler.common.utils.MainActivityContextHelper;
 import com.sevtinge.hyperceiler.dashboard.SettingsPreferenceFragment;
 import com.sevtinge.hyperceiler.expansion.utils.SignUtils;
-import com.sevtinge.hyperceiler.hook.module.base.manager.ServiceManager;
-import com.sevtinge.hyperceiler.hook.utils.api.ProjectApi;
-import com.sevtinge.hyperceiler.hook.utils.devicesdk.ModuleInfo;
-import com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt;
-import com.sevtinge.hyperceiler.hook.utils.prefs.PrefsUtils;
+import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper;
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi;
+import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -181,7 +180,7 @@ public class DevelopmentDebugInfoFragment extends SettingsPreferenceFragment {
             propertiesSystem.put("HyperOsSmallVersion", String.valueOf(getSmallVersion()));
             propertiesSystem.put("SystemVersion", getSystemVersionIncremental());
             propertiesSystem.put("InternationalBuild", String.valueOf(isInternational()));
-            propertiesSystem.put("Host", SystemSDKKt.getHost());
+            propertiesSystem.put("Host", (String) getHost());
             propertiesSystem.put("BuildDate", getBuildDate());
             propertiesSystem.put("UnofficialRom", String.valueOf(com.sevtinge.hyperceiler.main.banner.HomePageBannerHelper.getIsUnofficialRom(requireContext())));
             // propertiesSystem.put("Builder", getBuilder());
@@ -190,7 +189,7 @@ public class DevelopmentDebugInfoFragment extends SettingsPreferenceFragment {
         } catch (Exception ignored) {
         }
         try {
-            List<ModuleInfo> module = scanModules("/data/adb/modules", Charsets.UTF_8);
+            List<DeviceHelper.Module.ModuleInfo> module = scanModules("/data/adb/modules", Charsets.UTF_8);
 
             if (!module.isEmpty()) {
                 propertiesCheck.put("XposedManger", module.getFirst().extractName());
@@ -203,7 +202,7 @@ public class DevelopmentDebugInfoFragment extends SettingsPreferenceFragment {
             // propertiesCheck.put("WhoAmI", getWhoAmI());
             propertiesCheck.put("RootGroups", getRootGroupsInfo());
             propertiesCheck.put("CurrentUserId", String.valueOf(getCurrentUserId()));
-            propertiesCheck.put("ModuleActive", String.valueOf(ServiceManager.isModuleActivated()));
+            propertiesCheck.put("ModuleActive", String.valueOf(isModuleActivated));
             propertiesCheck.put("DebugModeActivate", String.valueOf(PrefsUtils.getSharedBoolPrefs(requireContext(), "prefs_key_development_debug_mode", false)));
             propertiesCheck.put("LoggerStatus", IS_LOGGER_ALIVE + ", " + LOGGER_CHECKER_ERR_CODE);
             propertiesCheck.put("Signature", SignUtils.getSHA256Signature(requireContext()));

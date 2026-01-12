@@ -18,14 +18,13 @@
  */
 package com.sevtinge.hyperceiler.utils;
 
+import static com.sevtinge.hyperceiler.Application.isModuleActivated;
+
 import android.content.Context;
 
 import com.sevtinge.hyperceiler.common.utils.DialogHelper;
-import com.sevtinge.hyperceiler.hook.module.base.manager.ServiceManager;
 
 public class XposedActivateHelper {
-
-    public static boolean isModuleActive = ServiceManager.isModuleActivated();
     public static int XposedVersion = 0;
 
     public static void init(Context context) {
@@ -33,6 +32,6 @@ public class XposedActivateHelper {
     }
 
     private static void checkActivateState(Context context) {
-        if (!isModuleActive) DialogHelper.showXposedActivateDialog(context);
+        if (!isModuleActivated) DialogHelper.showXposedActivateDialog(context);
     }
 }

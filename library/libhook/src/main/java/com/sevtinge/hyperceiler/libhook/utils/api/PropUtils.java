@@ -22,7 +22,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.SystemProperties;
 
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ReflectUtils;
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.EzxHelpUtils;
 import com.sevtinge.hyperceiler.libhook.utils.log.AndroidLog;
 import com.sevtinge.hyperceiler.libhook.utils.shell.ShellInit;
 import com.sevtinge.hyperceiler.libhook.utils.shell.ShellUtils;
@@ -37,8 +37,8 @@ public class PropUtils {
     public static String getProp(Context context, String name) {
         try {
             ClassLoader classLoader = context.getClassLoader();
-            return ReflectUtils.callStaticMethod(
-                    ReflectUtils.findClass("android.os.SystemProperties", classLoader),
+            return EzxHelpUtils.callStaticMethod(
+                    EzxHelpUtils.findClass("android.os.SystemProperties", classLoader),
                     "get",
                     name
             ).toString();

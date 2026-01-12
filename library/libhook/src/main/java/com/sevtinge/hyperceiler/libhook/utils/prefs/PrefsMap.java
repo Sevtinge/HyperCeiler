@@ -28,37 +28,37 @@ public class PrefsMap<K, V> extends HashMap<K, V> {
     }
 
     public int getInt(String key, int defValue) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? defValue : (Integer) get(key);
     }
 
     public long getLong(String key, long defValue) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? defValue : (Long) get(key);
     }
 
     public String getString(String key, String defValue) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? defValue : (String) get(key);
     }
 
     public int getStringAsInt(String key, int defValue) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? defValue : Integer.parseInt((String) get(key));
     }
 
     @SuppressWarnings("unchecked")
     public Set<String> getStringSet(String key) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? new LinkedHashSet<>() : (Set<String>) get(key);
     }
@@ -68,8 +68,8 @@ public class PrefsMap<K, V> extends HashMap<K, V> {
     }
 
     public boolean getBoolean(String key, boolean defValue) {
-        if (!key.startsWith("pref_key_")) {
-            key = "pref_key_" + key;
+        if (!key.startsWith("prefs_key_")) {
+            key = "prefs_key_" + key;
         }
         return get(key) == null ? defValue : (Boolean) get(key);
     }

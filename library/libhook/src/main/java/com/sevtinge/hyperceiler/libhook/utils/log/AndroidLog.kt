@@ -29,6 +29,7 @@ object AndroidLog {
     private const val TAG = "HyperCeiler"
 
     @Volatile
+    @JvmField
     var logLevel: Int = 3
 
     interface LogListener {

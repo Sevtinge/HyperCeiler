@@ -16,11 +16,13 @@
 
  * Copyright (C) 2023-2026 HyperCeiler Contributions
  */
-package com.sevtinge.hyperceiler.libhook.utils.devices;
+package com.sevtinge.hyperceiler.libhook.utils.api;
 
-import com.sevtinge.hyperceiler.libhook.utils.api.PropUtils;
-
-public class DeviceType {
+/**
+ * 设备类型判断工具类
+ * 用于判断折叠屏、翻盖屏等特殊设备类型
+ */
+public class DeviceTypeUtils {
 
     public static final boolean IS_DEBUGGABLE;
     public static final boolean IS_FLIP;

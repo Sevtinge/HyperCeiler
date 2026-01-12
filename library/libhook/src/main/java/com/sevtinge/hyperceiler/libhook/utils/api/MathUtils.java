@@ -20,7 +20,6 @@ package com.sevtinge.hyperceiler.libhook.utils.api;
 
 import android.graphics.Rect;
 
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ReflectUtils;
 import com.sevtinge.hyperceiler.libhook.utils.log.AndroidLog;
 
 public class MathUtils {
@@ -259,7 +258,8 @@ public class MathUtils {
         float maxSize = Math.max(outToResize.width(), outToResize.height());
         try {
             Rect rectInstance = new Rect(outToResize);
-            ReflectUtils.callMethod(rectInstance, "scale", largestSide / maxSize);
+            InvokeUtils.callMethod("android.graphics.Rect", rectInstance,
+                "scale", new Class[]{float.class}, largestSide / maxSize);
         } catch (Exception e) {
             AndroidLog.e("Call Method scale error: ", e);
         }

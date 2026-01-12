@@ -18,7 +18,11 @@
  */
 package com.sevtinge.hyperceiler.libhook.base;
 
+import static com.sevtinge.hyperceiler.libhook.base.XposedInitEntry.mResHook;
+
 import com.sevtinge.hyperceiler.libhook.callback.IHook;
+import com.sevtinge.hyperceiler.libhook.utils.api.ContextUtils;
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.dexkit.DexKit;
 import com.sevtinge.hyperceiler.libhook.utils.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsMap;
@@ -26,6 +30,7 @@ import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 import io.github.libxposed.api.XposedInterface;
@@ -40,7 +45,6 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam;
  * @author HyperCeiler
  */
 public abstract class BaseLoad {
-
     private static final Object sLock = new Object();
     private static volatile ClassLoader sClassLoader;
     private static volatile String sPackageName;
@@ -73,7 +77,7 @@ public abstract class BaseLoad {
         }
     }
 
-    protected String TAG = getClass().getSimpleName();
+    protected String TAG = "BaseLoad";
     protected final PrefsMap<String, Object> mPrefsMap = PrefsUtils.mPrefsMap;
 
     public abstract void onPackageLoaded();
@@ -90,6 +94,20 @@ public abstract class BaseLoad {
             sClassLoader = lpparam.getClassLoader();
             sPackageName = lpparam.getPackageName();
             sLpparam = lpparam;
+        }
+
+        // 把模块资源加载到目标应用
+        try {
+            if (!Objects.equals(ProjectApi.mAppModulePkg, sPackageName)) {
+                boolean isAndroid = "android".equals(sPackageName);
+                ContextUtils.getWaitContext(context -> {
+                    if (context != null) {
+                        mResHook.loadModuleRes(context);
+                    }
+                }, isAndroid);
+            }
+        } catch (Throwable e) {
+            XposedLog.e(TAG, "get context failed! " + e);
         }
 
         try {
@@ -118,40 +136,18 @@ public abstract class BaseLoad {
 
     protected void initHook(IHook hook, BooleanSupplier condition) {
         if (hook == null) return;
+        TAG = hook.getClass().getSimpleName();
 
         try {
             if (condition.getAsBoolean()) {
                 hook.init();
-                logHookSuccess(hook);
+                XposedLog.i(TAG, "Hook Success");
             }
         } catch (Throwable t) {
-            logHookFailure(hook, t);
+            StringWriter sw = new StringWriter();
+            t.printStackTrace(new PrintWriter(sw));
+            XposedLog.e(TAG, "Hook Failed: " + sw);
         }
     }
 
-
-    private void logHookSuccess(IHook hook) {
-        String hookName = hook.getClass().getSimpleName();
-        // 处理 Kotlin object 单例的类名
-        if (hookName.isEmpty() || "INSTANCE".equals(hookName)) {
-            hookName = hook.getClass().getEnclosingClass() != null
-                    ? hook.getClass().getEnclosingClass().getSimpleName()
-                    : hook.getClass().getName();
-        }
-        String pkg = sPackageName != null ? sPackageName : "";
-        XposedLog.i(TAG + "-" + pkg, hookName + " -> Hook Success");
-    }
-
-    private void logHookFailure(IHook hook, Throwable t) {
-        String hookName = hook.getClass().getSimpleName();
-        if (hookName.isEmpty() || "INSTANCE".equals(hookName)) {
-            hookName = hook.getClass().getEnclosingClass() != null
-                    ? hook.getClass().getEnclosingClass().getSimpleName()
-                    : hook.getClass().getName();
-        }
-        StringWriter sw = new StringWriter();
-        t.printStackTrace(new PrintWriter(sw));
-        String pkg = sPackageName != null ? sPackageName : "";
-        XposedLog.e(TAG + "-" + pkg, hookName + " -> Hook Failed: " + sw);
-    }
 }

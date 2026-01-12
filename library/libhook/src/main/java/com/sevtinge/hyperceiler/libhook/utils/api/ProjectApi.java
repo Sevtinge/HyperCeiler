@@ -16,10 +16,14 @@
 
   * Copyright (C) 2023-2026 HyperCeiler Contributions
 */
-package com.sevtinge.hyperceiler.libhook.utils.devices;
+package com.sevtinge.hyperceiler.libhook.utils.api;
 
 import com.sevtinge.hyperceiler.libhook.BuildConfig;
 
+/**
+ * 项目配置工具类
+ * 提供构建类型判断功能
+ */
 public class ProjectApi {
     public static final String mAppModulePkg = BuildConfig.APP_MODULE_ID;
 

@@ -35,7 +35,7 @@ import android.util.Log;
 import android.util.LruCache;
 import android.widget.TextView;
 
-import com.sevtinge.hyperceiler.libhook.utils.devices.ProjectApi;
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi;
 import com.sevtinge.hyperceiler.libhook.utils.log.AndroidLog;
 import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils;
 import com.sevtinge.hyperceiler.libhook.utils.shell.ShellInit;
@@ -154,11 +154,11 @@ public class AppsTool {
 
     public static String getPackageVersionName(String sourceDir, ClassLoader classLoader) {
         try {
-            Class<?> parserCls = ReflectUtils.findClass("android.content.pm.PackageParser", classLoader);
+            Class<?> parserCls = EzxHelpUtils.findClass("android.content.pm.PackageParser", classLoader);
             Object parser = parserCls.getDeclaredConstructor().newInstance();
             File apkPath = new File(sourceDir);
-            Object pkg = ReflectUtils.callMethod(parser, "parsePackage", apkPath, 0);
-            return (String) ReflectUtils.getObjectField(pkg, "mVersionName");
+            Object pkg = EzxHelpUtils.callMethod(parser, "parsePackage", apkPath, 0);
+            return (String) EzxHelpUtils.getObjectField(pkg, "mVersionName");
         } catch (Throwable e) {
             AndroidLog.e("getPackageVersionName", e.toString());
             return "null";
@@ -167,11 +167,11 @@ public class AppsTool {
 
     public static int getPackageVersionCode(String sourceDir, ClassLoader classLoader) {
         try {
-            Class<?> parserCls = ReflectUtils.findClass("android.content.pm.PackageParser", classLoader);
+            Class<?> parserCls = EzxHelpUtils.findClass("android.content.pm.PackageParser", classLoader);
             Object parser = parserCls.getDeclaredConstructor().newInstance();
             File apkPath = new File(sourceDir);
-            Object pkg = ReflectUtils.callMethod(parser, "parsePackage", apkPath, 0);
-            return ReflectUtils.getIntField(pkg, "mVersionCode");
+            Object pkg = EzxHelpUtils.callMethod(parser, "parsePackage", apkPath, 0);
+            return EzxHelpUtils.getIntField(pkg, "mVersionCode");
         } catch (Throwable e) {
             AndroidLog.e("getPackageVersionCode", e.toString());
             return -1;
@@ -191,8 +191,8 @@ public class AppsTool {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                 intent.setData(Uri.parse("package:" + pkg));
                 if (user != 0) {
-                    Object userHandle = ReflectUtils.newInstance(UserHandle.class, user);
-                    ReflectUtils.callMethod(context, "startActivityAsUser", intent, userHandle);
+                    Object userHandle = EzxHelpUtils.newInstance(UserHandle.class, user);
+                    EzxHelpUtils.callMethod(context, "startActivityAsUser", intent, userHandle);
                 } else {
                     context.startActivity(intent);
                 }

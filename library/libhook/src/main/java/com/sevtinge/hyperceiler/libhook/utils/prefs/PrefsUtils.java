@@ -22,12 +22,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import com.sevtinge.hyperceiler.libhook.provider.SharedPrefsProvider;
-import com.sevtinge.hyperceiler.libhook.utils.devices.ProjectApi;
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.AppsTool;
 
 import java.io.File;
@@ -194,23 +193,56 @@ public class PrefsUtils {
      * 注册偏好设置变更监听器
      */
     public static void registerOnSharedPreferenceChangeListener(Context context) {
-        mSharedPreferences.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
-            Log.i("prefs", "Changed: " + key);
-            AppsTool.requestBackup(context);
-            Object val = sharedPreferences.getAll().get(key);
-            String path = "";
-            if (val instanceof String)
-                path = "string/";
-            else if (val instanceof Set<?>)
-                path = "stringset/";
-            else if (val instanceof Integer)
-                path = "integer/";
-            else if (val instanceof Boolean)
-                path = "boolean/";
+        HashSet<String> ignoreKeys = new HashSet<>();
 
-            ContentResolver resolver = context.getContentResolver();
-            resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/" + path + key), null);
-            if (!path.isEmpty()) resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/pref/" + path + key), null);
-        });
+        SharedPreferences.OnSharedPreferenceChangeListener prefsChanged = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (remotePrefs == null) return;
+                AppsTool.requestBackup(context);
+                if (key == null) {
+                    RemotePreferences.Editor prefEdit = remotePrefs.edit();
+                    for (String remoteKey : remotePrefs.getAll().keySet()) {
+                        prefEdit.remove(remoteKey);
+                    }
+                    prefEdit.apply();
+                    return;
+                }
+                if (ignoreKeys.contains(key)) return;
+                String path = "";
+                Object val = sharedPreferences.getAll().get(key);
+                RemotePreferences.Editor prefEdit = remotePrefs.edit();
+                if (val == null) {
+                    prefEdit.remove(key);
+                } else if (val instanceof Boolean) {
+                    prefEdit.putBoolean(key, (Boolean) val);
+                    path = "boolean/";
+                } else if (val instanceof Float) {
+                    prefEdit.putFloat(key, (Float) val);
+                    path = "float/";
+                } else if (val instanceof Integer) {
+                    prefEdit.putInt(key, (Integer) val);
+                    path = "integer/";
+                } else if (val instanceof Long) {
+                    prefEdit.putLong(key, (Long) val);
+                    path = "long/";
+                } else if (val instanceof String) {
+                    prefEdit.putString(key, (String) val);
+                    path = "string/";
+                } else if (val instanceof Set<?>) {
+                    prefEdit.putStringSet(key, (Set<String>) val);
+                    path = "stringset/";
+                }
+
+                ContentResolver resolver = context.getContentResolver();
+                resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/" + path + key), null);
+                if (!path.isEmpty()) resolver.notifyChange(Uri.parse("content://" + SharedPrefsProvider.AUTHORITY + "/pref/" + path + key), null);
+                prefEdit.apply();
+            }
+        };
+
+        if (mSharedPreferences != null) {
+            mSharedPreferences.registerOnSharedPreferenceChangeListener(prefsChanged);
+        }
     }
 }

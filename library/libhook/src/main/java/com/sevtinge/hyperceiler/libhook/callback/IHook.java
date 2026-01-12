@@ -19,21 +19,21 @@
 package com.sevtinge.hyperceiler.libhook.callback;
 
 import com.sevtinge.hyperceiler.libhook.base.BaseLoad;
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ReflectUtils;
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.EzxHelpUtils;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.ResourcesTool;
 import com.sevtinge.hyperceiler.libhook.utils.log.XposedLog;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.List;
 
 import io.github.libxposed.api.XposedInterface;
-import io.github.libxposed.api.XposedInterface.Hooker;
 import io.github.libxposed.api.XposedInterface.MethodUnhooker;
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam;
 
 /**
  * Hook 规则接口
+ * <p>
+ * 提供 Java 常用的 Hook 工具方法，Kotlin 建议直接使用 ezxhelper API。
  *
  * @author HyperCeiler
  */
@@ -59,133 +59,122 @@ public interface IHook {
     // ==================== 类查找 ====================
 
     default Class<?> findClass(String className) {
-        return ReflectUtils.findClass(className, getClassLoader());
+        return EzxHelpUtils.findClass(className, getClassLoader());
     }
 
     default Class<?> findClassIfExists(String className) {
-        return ReflectUtils.findClassIfExists(className, getClassLoader());
+        return EzxHelpUtils.findClassIfExists(className, getClassLoader());
     }
 
     // ==================== 字段操作 ====================
 
     default Object getObjectField(Object obj, String fieldName) {
-        return ReflectUtils.getObjectField(obj, fieldName);
+        return EzxHelpUtils.getObjectField(obj, fieldName);
     }
 
     default void setObjectField(Object obj, String fieldName, Object value) {
-        ReflectUtils.setObjectField(obj, fieldName, value);
+        EzxHelpUtils.setObjectField(obj, fieldName, value);
     }
 
     default Object getStaticObjectField(Class<?> clazz, String fieldName) {
-        return ReflectUtils.getStaticObjectField(clazz, fieldName);
+        return EzxHelpUtils.getStaticObjectField(clazz, fieldName);
     }
 
     default void setStaticObjectField(Class<?> clazz, String fieldName, Object value) {
-        ReflectUtils.setStaticObjectField(clazz, fieldName, value);
+        EzxHelpUtils.setStaticObjectField(clazz, fieldName, value);
     }
 
     // ==================== 方法调用 ====================
 
     default Object callMethod(Object obj, String methodName, Object... args) {
-        return ReflectUtils.callMethod(obj, methodName, args);
+        return EzxHelpUtils.callMethod(obj, methodName, args);
     }
 
     default Object callStaticMethod(Class<?> clazz, String methodName, Object... args) {
-        return ReflectUtils.callStaticMethod(clazz, methodName, args);
+        return EzxHelpUtils.callStaticMethod(clazz, methodName, args);
     }
 
     // ==================== Hook 方法 ====================
 
-    default MethodUnhooker<Method> hook(Method method, Class<? extends Hooker> hooker) {
-        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
-        return xposed().hook(method, hooker);
+    /**
+     * Hook 方法
+     *
+     * @param method   要 Hook 的方法
+     * @param callback Hook 回调
+     * @return MethodUnhooker 对象
+     */
+    default MethodUnhooker<?> hookMethod(Method method, IMethodHook callback) {
+        return EzxHelpUtils.hookMethod(method, callback);
     }
 
-    @SuppressWarnings("unchecked")
-    default MethodUnhooker<Constructor<?>> hook(Constructor<?> constructor, Class<? extends Hooker> hooker) {
-        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
-        return (MethodUnhooker<Constructor<?>>) (MethodUnhooker<?>) xposed().hook(constructor, hooker);
+    /**
+     * 查找并 Hook 方法
+     * <p>
+     * 最后一个参数必须是 IMethodHook，前面的参数是参数类型
+     *
+     * @param clazz      目标类
+     * @param methodName 方法名
+     * @param args       参数类型 + IMethodHook 回调
+     * @return MethodUnhooker 对象
+     */
+    default MethodUnhooker<?> findAndHookMethod(Class<?> clazz, String methodName, Object... args) {
+        return EzxHelpUtils.findAndHookMethod(clazz, methodName, args);
     }
 
-    default MethodUnhooker<Method> findAndHookMethod(Class<?> clazz, String methodName, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        if (clazz == null) throw new IllegalArgumentException("clazz == null");
-        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
-
-        Method target = findMethodInHierarchy(clazz, methodName, parameterTypes);
-        if (target == null) {
-            throw new NoSuchMethodError(clazz.getName() + "#" + methodName + Arrays.toString(parameterTypes));
-        }
-        return xposed().hook(target, hooker);
+    /**
+     * Hook 类中所有指定名称的方法
+     *
+     * @param clazz      目标类
+     * @param methodName 方法名
+     * @param callback   Hook 回调
+     * @return MethodUnhooker 对象列表
+     */
+    default List<MethodUnhooker<?>> hookAllMethods(Class<?> clazz, String methodName, IMethodHook callback) {
+        return EzxHelpUtils.hookAllMethods(clazz, methodName, callback);
     }
 
-    default MethodUnhooker<Method> findAndHookMethod(String className, String methodName, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        Class<?> clazz = findClassIfExists(className);
-        if (clazz == null) {
-            throw new IllegalArgumentException("Class not found: " + className);
-        }
-        return findAndHookMethod(clazz, methodName, hooker, parameterTypes);
-    }
-
-    @SuppressWarnings("unchecked")
-    default MethodUnhooker<Constructor<?>> findAndHookConstructor(Class<?> clazz, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        if (clazz == null) throw new IllegalArgumentException("clazz == null");
-        if (xposed() == null) throw new IllegalStateException("HookTool not initialized");
-
-        Constructor<?> ctor = findConstructorExact(clazz, parameterTypes);
-        if (ctor == null) {
-            throw new NoSuchMethodError(clazz.getName() + "<init>" + Arrays.toString(parameterTypes));
-        }
-        return (MethodUnhooker<Constructor<?>>) (MethodUnhooker<?>) xposed().hook(ctor, hooker);
-    }
-
-    default MethodUnhooker<Constructor<?>> findAndHookConstructor(String className, Class<? extends Hooker> hooker, Class<?>... parameterTypes) {
-        Class<?> clazz = findClassIfExists(className);
-        if (clazz == null) {
-            throw new IllegalArgumentException("Class not found: " + className);
-        }
-        return findAndHookConstructor(clazz, hooker, parameterTypes);
-    }
-
-    default void hookAllMethods(Class<?> clazz, String methodName, Class<? extends Hooker> hooker) {
-        if (clazz == null || xposed() == null) return;
-        for (Method m : clazz.getDeclaredMethods()) {
-            if (m.getName().equals(methodName)) {
-                try {
-                    xposed().hook(m, hooker);
-                } catch (Throwable t) {
-                    XposedLog.e("IHook", "hookAllMethods failed: " + clazz.getName() + "#" + methodName, t);
-                }
-            }
-        }
-    }
-
-    default void hookAllMethods(String className, String methodName, Class<? extends Hooker> hooker) {
+    /**
+     * Hook 类中所有指定名称的方法（通过类名）
+     *
+     * @param className  类名
+     * @param methodName 方法名
+     * @param callback   Hook 回调
+     * @return MethodUnhooker 对象列表
+     */
+    default List<MethodUnhooker<?>> hookAllMethods(String className, String methodName, IMethodHook callback) {
         Class<?> clazz = findClassIfExists(className);
         if (clazz == null) {
             XposedLog.w("IHook", "hookAllMethods: class not found: " + className);
-            return;
+            return java.util.Collections.emptyList();
         }
-        hookAllMethods(clazz, methodName, hooker);
+        return EzxHelpUtils.hookAllMethods(clazz, methodName, callback);
     }
 
-    default void hookAllConstructors(Class<?> clazz, Class<? extends Hooker> hooker) {
-        if (clazz == null || xposed() == null) return;
-        for (Constructor<?> c : clazz.getDeclaredConstructors()) {
-            try {
-                xposed().hook(c, hooker);
-            } catch (Throwable t) {
-                XposedLog.e("IHook", "hookAllConstructors failed: " + clazz.getName(), t);
-            }
-        }
+    /**
+     * Hook 类中所有构造器
+     *
+     * @param clazz    目标类
+     * @param callback Hook 回调
+     * @return MethodUnhooker 对象列表
+     */
+    default List<MethodUnhooker<?>> hookAllConstructors(Class<?> clazz, IMethodHook callback) {
+        return EzxHelpUtils.hookAllConstructors(clazz, callback);
     }
 
-    default void hookAllConstructors(String className, Class<? extends Hooker> hooker) {
-        Class<?> clazz = findClassIfExists(className);
-        if (clazz == null) {
-            XposedLog.w("IHook", "hookAllConstructors: class not found: " + className);
-            return;
-        }
-        hookAllConstructors(clazz, hooker);
+    // ==================== 便捷 Hook 工具 ====================
+
+    /**
+     * 创建一个返回常量值的 Hook 回调
+     */
+    default IMethodHook returnConstant(Object result) {
+        return EzxHelpUtils.returnConstant(result);
+    }
+
+    /**
+     * 获取阻止原方法执行的 Hook（返回 null）
+     */
+    default IMethodHook doNothing() {
+        return EzxHelpUtils.DO_NOTHING;
     }
 
     // ==================== 资源 Hook ====================
@@ -213,29 +202,5 @@ public interface IHook {
         if (resTool != null) {
             resTool.setObjectReplacement(pkg, type, name, replacementResValue);
         }
-    }
-
-    private static Method findMethodInHierarchy(Class<?> clazz, String methodName, Class<?>[] paramTypes) {
-        Class<?> c = clazz;
-        while (c != null) {
-            try {
-                Method m = c.getDeclaredMethod(methodName, paramTypes);
-                m.setAccessible(true);
-                return m;
-            } catch (NoSuchMethodException ignored) {
-            }
-            c = c.getSuperclass();
-        }
-        return null;
-    }
-
-    private static Constructor<?> findConstructorExact(Class<?> clazz, Class<?>[] paramTypes) {
-        try {
-            Constructor<?> c = clazz.getDeclaredConstructor(paramTypes);
-            c.setAccessible(true);
-            return c;
-        } catch (NoSuchMethodException ignored) {
-        }
-        return null;
     }
 }

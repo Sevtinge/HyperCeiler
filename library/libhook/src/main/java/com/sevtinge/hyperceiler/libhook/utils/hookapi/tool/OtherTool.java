@@ -71,18 +71,18 @@ public class OtherTool {
     }
 
     private static Context currentApplication() {
-        Class<?> activityThreadClass = ReflectUtils.findClass("android.app.ActivityThread", null);
-        return (Application) ReflectUtils.callStaticMethod(activityThreadClass, "currentApplication");
+        Class<?> activityThreadClass = EzxHelpUtils.findClass("android.app.ActivityThread", null);
+        return (Application) EzxHelpUtils.callStaticMethod(activityThreadClass, "currentApplication");
     }
 
     private static Context getSystemContext() {
         Context context = null;
-        Class<?> activityThreadClass = ReflectUtils.findClass("android.app.ActivityThread", null);
-        Object currentActivityThread = ReflectUtils.callStaticMethod(activityThreadClass, "currentActivityThread");
+        Class<?> activityThreadClass = EzxHelpUtils.findClass("android.app.ActivityThread", null);
+        Object currentActivityThread = EzxHelpUtils.callStaticMethod(activityThreadClass, "currentActivityThread");
         if (currentActivityThread != null)
-            context = (Context) ReflectUtils.callMethod(currentActivityThread, "getSystemContext");
+            context = (Context) EzxHelpUtils.callMethod(currentActivityThread, "getSystemContext");
         if (context == null)
-            context = (Context) ReflectUtils.callMethod(currentActivityThread, "getSystemUiContext");
+            context = (Context) EzxHelpUtils.callMethod(currentActivityThread, "getSystemUiContext");
         return context;
     }
 

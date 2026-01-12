@@ -19,13 +19,13 @@
 package com.sevtinge.hyperceiler.libhook.utils.hookapi.blur.zhenxiang
 
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.RoundRectShape
 import android.view.View
 import android.view.WindowManager
+import androidx.core.graphics.toColorInt
 import com.android.internal.graphics.drawable.BackgroundBlurDrawable
-import com.sevtinge.hyperceiler.libhook.utils.devices.isMoreAndroidVersion
+import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreAndroidVersion
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.blur.zhenxiang.model.CornersRadius
 import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils.mPrefsMap
 import java.util.function.Consumer
@@ -33,7 +33,7 @@ import java.util.function.Consumer
 class SystemBlurController(
     private val view: View,
     backgroundColour: Int = if (mPrefsMap.getInt("blur_view_color", -1) != -1) mPrefsMap.getInt("blur_view_color", -1)
-    else Color.parseColor("#44FFFFFF"),
+    else "#44FFFFFF".toColorInt(),
     blurRadius: Int = mPrefsMap.getInt("home_blur_radius", 100),
     cornerRadius: CornersRadius = CornersRadius.all(0f),
 ) : View.OnAttachStateChangeListener {

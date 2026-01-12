@@ -22,7 +22,7 @@ import androidx.preference.Preference;
 
 import com.sevtinge.hyperceiler.core.R;
 import com.sevtinge.hyperceiler.dashboard.DashboardFragment;
-import com.sevtinge.hyperceiler.hook.utils.devicesdk.TelephonyManager;
+import com.sevtinge.hyperceiler.libhook.utils.api.TelephonyManager;
 
 public class SystemFrameworkFragment extends DashboardFragment {
 

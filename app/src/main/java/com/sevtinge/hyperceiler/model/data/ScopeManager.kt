@@ -1,6 +1,8 @@
-package com.sevtinge.hyperceiler.libhook.base.manager
+package com.sevtinge.hyperceiler.model.data
 
 import android.util.Log
+import com.sevtinge.hyperceiler.Application.mService
+import io.github.libxposed.service.XposedService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -14,7 +16,7 @@ object ScopeManager {
     }
 
     suspend fun getScope(): List<String>? = withContext(Dispatchers.IO) {
-        val service = ServiceManager.service
+        val service = mService
         if (service == null) {
             Log.e(TAG, "getScope: LSPosed service not available.")
             return@withContext null
@@ -34,19 +36,21 @@ object ScopeManager {
      */
     suspend fun addScope(packageName: String, callback: ScopeCallback) {
         withContext(Dispatchers.Main) {
-            val service = ServiceManager.service
+            val service = mService
             if (service == null) {
                 callback.onScopeOperationFail("LSPosed service not available.")
                 return@withContext
             }
 
-            val serviceCallback = object : io.github.libxposed.service.XposedService.OnScopeEventListener {
+            val serviceCallback = object : XposedService.OnScopeEventListener {
                 override fun onScopeRequestApproved(pkg: String) {
                     callback.onScopeOperationSuccess("$pkg enabled successfully.")
                 }
+
                 override fun onScopeRequestDenied(pkg: String) {
                     callback.onScopeOperationFail("Request for $pkg was denied.")
                 }
+
                 override fun onScopeRequestFailed(pkg: String, message: String) {
                     callback.onScopeOperationFail("Failed to enable $pkg: $message")
                 }
@@ -67,7 +71,7 @@ object ScopeManager {
      * @return 成功则返回 null，失败则返回错误信息字符串。
      */
     suspend fun removeScope(packageName: String): String? = withContext(Dispatchers.IO) {
-        val service = ServiceManager.service
+        val service = mService
         if (service == null) {
             Log.e(TAG, "removeScope: LSPosed service not available.")
             return@withContext "LSPosed service not available."

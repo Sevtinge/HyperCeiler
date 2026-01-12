@@ -18,7 +18,7 @@
  */
 package com.sevtinge.hyperceiler.main.page.settings.helper;
 
-import static com.sevtinge.hyperceiler.hook.utils.devicesdk.SystemSDKKt.isFullSupport;
+import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isFullSupport;
 
 import androidx.preference.Preference;
 

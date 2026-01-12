@@ -19,7 +19,7 @@
 package com.sevtinge.hyperceiler.libhook.utils.shell
 
 import android.content.ComponentName
-import com.sevtinge.hyperceiler.libhook.utils.devices.ProjectApi
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi
 import com.sevtinge.hyperceiler.libhook.utils.log.AndroidLog
 
 /**

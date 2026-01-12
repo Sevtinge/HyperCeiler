@@ -16,14 +16,17 @@
 
  * Copyright (C) 2023-2026 HyperCeiler Contributions
  */
-package com.sevtinge.hyperceiler.libhook.utils.devices;
+package com.sevtinge.hyperceiler.libhook.utils.api;
 
 import static io.github.kyuubiran.ezxhelper.xposed.EzXposed.getAppContext;
 
 import android.content.Context;
 import android.util.DisplayMetrics;
 
-
+/**
+ * 显示工具类
+ * 提供 dp/sp/px 单位转换功能
+ */
 public class DisplayUtils {
 
     public static float mDensity;

@@ -18,9 +18,6 @@
  */
 package com.sevtinge.hyperceiler.libhook.utils.hookapi.tool;
 
-import static com.sevtinge.hyperceiler.libhook.utils.log.XposedLog.e;
-import static com.sevtinge.hyperceiler.libhook.utils.log.XposedLog.w;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -35,7 +32,9 @@ import android.util.Pair;
 import android.util.TypedValue;
 
 import com.sevtinge.hyperceiler.libhook.base.BaseLoad;
+import com.sevtinge.hyperceiler.libhook.callback.IMethodHook;
 import com.sevtinge.hyperceiler.libhook.utils.api.ContextUtils;
+import com.sevtinge.hyperceiler.libhook.utils.log.XposedLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,10 +42,8 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import io.github.kyuubiran.ezxhelper.xposed.common.BeforeHookParam;
 import io.github.libxposed.api.XposedInterface;
-import io.github.libxposed.api.XposedInterface.BeforeHookCallback;
-import io.github.libxposed.api.XposedInterface.Hooker;
-import io.github.libxposed.api.XposedInterface.MethodUnhooker;
 
 /**
  * 重写资源钩子，希望本钩子能有更好的生命力。
@@ -66,7 +63,7 @@ public class ResourcesTool {
 
     private final CopyOnWriteArrayList<Resources> resourcesArrayList = new CopyOnWriteArrayList<>();
     private final java.util.Set<Integer> resMap = ConcurrentHashMap.newKeySet();
-    private final CopyOnWriteArrayList<MethodUnhooker<?>> unhooks = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<XposedInterface.MethodUnhooker<?>> unhooks = new CopyOnWriteArrayList<>();
     private final ConcurrentHashMap<ResKey, Pair<ReplacementType, Object>> replacements = new ConcurrentHashMap<>();
 
     private record ResKey(String pkg, String type, String name) {
@@ -100,7 +97,7 @@ public class ResourcesTool {
 
     public static synchronized ResourcesTool getInstance() {
         if (sInstance == null) {
-            e(TAG, "ResourcesTool not initialized. Call getInstance(String modulePath) first.");
+            XposedLog.e(TAG, "ResourcesTool not initialized. Call getInstance(String modulePath) first.");
         }
         return sInstance;
     }
@@ -115,7 +112,7 @@ public class ResourcesTool {
 
     public Resources loadModuleRes(Resources resources, boolean doOnMainLooper) {
         if (resources == null) {
-            w(TAG, "Context can't be null!");
+            XposedLog.w(TAG, "Context can't be null!");
             return null;
         }
         boolean loaded = loadResAboveApi30(resources, doOnMainLooper);
@@ -124,7 +121,7 @@ public class ResourcesTool {
                 resourcesArrayList.add(resources);
             }
         } else {
-            w(TAG, "loadModuleRes: failed to load resources: " + resources);
+            XposedLog.w(TAG, "loadModuleRes: failed to load resources: " + resources);
         }
         return resources;
     }
@@ -152,7 +149,7 @@ public class ResourcesTool {
                         loader.addProvider(provider);
                         resourcesLoader = loader;
                     } catch (IOException ex) {
-                        e(TAG, "Failed to add resource! debug: above api 30.", ex);
+                        XposedLog.e(TAG, "Failed to add resource! debug: above api 30.", ex);
                         return false;
                     }
                 }
@@ -183,7 +180,7 @@ public class ResourcesTool {
             if (expected1.equals(ex.getMessage())) {
                 return loadResBelowApi30(resources);
             } else {
-                e(TAG, "Failed to add loaders!", ex);
+                XposedLog.e(TAG, "Failed to add loaders!", ex);
                 return false;
             }
         }
@@ -198,11 +195,11 @@ public class ResourcesTool {
             addAssetPath.setAccessible(true);
             Integer cookie = (Integer) addAssetPath.invoke(assets, mModulePath);
             if (cookie == null || cookie == 0) {
-                w(TAG, "Method 'addAssetPath' result 0, maybe load res failed!");
+                XposedLog.w(TAG, "Method 'addAssetPath' result 0, maybe load res failed!");
                 return false;
             }
         } catch (Throwable ex) {
-            e(TAG, "Failed to add resource! debug: below api 30.", ex);
+            XposedLog.e(TAG, "Failed to add resource! debug: below api 30.", ex);
             return false;
         }
         return true;
@@ -214,7 +211,7 @@ public class ResourcesTool {
 
         XposedInterface xposed = BaseLoad.getXposed();
         if (xposed == null) {
-            e(TAG, "XposedInterface not initialized!");
+            XposedLog.e(TAG, "XposedInterface not initialized!");
             return;
         }
 
@@ -228,30 +225,30 @@ public class ResourcesTool {
                      "getIntArray", "getStringArray", "getTextArray", "getAnimation" -> {
                     if (paramTypes.length == 1 && paramTypes[0].equals(int.class)) {
                         try {
-                            MethodUnhooker<?> unhook = xposed.hook(method, ResHooker.class);
+                            XposedInterface.MethodUnhooker<?> unhook = EzxHelpUtils.hookMethod(method, ResHooker);
                             unhooks.add(unhook);
                         } catch (Throwable t) {
-                            e(TAG, "Failed to hook " + name, t);
+                            XposedLog.e(TAG, "Failed to hook " + name, t);
                         }
                     }
                 }
                 case "getColor" -> {
                     if (paramTypes.length == 2 && paramTypes[0].equals(int.class)) {
                         try {
-                            MethodUnhooker<?> unhook = xposed.hook(method, ResHooker.class);
+                            XposedInterface.MethodUnhooker<?> unhook = EzxHelpUtils.hookMethod(method, ResHooker);
                             unhooks.add(unhook);
                         } catch (Throwable t) {
-                            e(TAG, "Failed to hook " + name, t);
+                            XposedLog.e(TAG, "Failed to hook " + name, t);
                         }
                     }
                 }
                 case "getFraction", "getDrawableForDensity" -> {
                     if (paramTypes.length == 3 && paramTypes[0].equals(int.class)) {
                         try {
-                            MethodUnhooker<?> unhook = xposed.hook(method, ResHooker.class);
+                            XposedInterface.MethodUnhooker<?> unhook = EzxHelpUtils.hookMethod(method, ResHooker);
                             unhooks.add(unhook);
                         } catch (Throwable t) {
-                            e(TAG, "Failed to hook " + name, t);
+                            XposedLog.e(TAG, "Failed to hook " + name, t);
                         }
                     }
                 }
@@ -264,10 +261,10 @@ public class ResourcesTool {
                 Class<?>[] paramTypes = method.getParameterTypes();
                 if (paramTypes.length == 2 && paramTypes[0].equals(int.class) && paramTypes[1].equals(int.class)) {
                     try {
-                        MethodUnhooker<?> unhook = xposed.hook(method, TypedArrayHooker.class);
+                        XposedInterface.MethodUnhooker<?> unhook = EzxHelpUtils.hookMethod(method, TypedArrayHooker);
                         unhooks.add(unhook);
                     } catch (Throwable t) {
-                        e(TAG, "Failed to hook TypedArray.getColor", t);
+                        XposedLog.e(TAG, "Failed to hook TypedArray.getColor", t);
                     }
                 }
             }
@@ -279,7 +276,7 @@ public class ResourcesTool {
             isInit = false;
             return;
         }
-        for (MethodUnhooker<?> unhook : unhooks) {
+        for (XposedInterface.MethodUnhooker<?> unhook : unhooks) {
             unhook.unhook();
         }
         unhooks.clear();
@@ -287,8 +284,8 @@ public class ResourcesTool {
         hooksApplied = false;
     }
 
-    public static class TypedArrayHooker implements Hooker {
-        public static void before(BeforeHookCallback callback) {
+    IMethodHook TypedArrayHooker = new IMethodHook() {
+        public void before(BeforeHookParam callback) {
             ResourcesTool instance = getInstance();
             if (instance == null) return;
 
@@ -298,24 +295,24 @@ public class ResourcesTool {
             int index = (int) args[0];
             Object thisObject = callback.getThisObject();
 
-            int[] mData = (int[]) ReflectUtils.getObjectField(thisObject, "mData");
+            int[] mData = (int[]) EzxHelpUtils.getObjectField(thisObject, "mData");
             if (mData == null || index + 3 >= mData.length) return;
 
             int type = mData[index];
             int id = mData[index + 3];
 
             if (id != 0 && (type != TypedValue.TYPE_NULL)) {
-                Resources mResources = (Resources) ReflectUtils.getObjectField(thisObject, "mResources");
+                Resources mResources = (Resources) EzxHelpUtils.getObjectField(thisObject, "mResources");
                 Object value = instance.getTypedArrayReplacement(mResources, id);
                 if (value != null) {
-                    callback.returnAndSkip(value);
+                    callback.setResult(value);
                 }
             }
         }
-    }
+    };
 
-    public static class ResHooker implements Hooker {
-        public static void before(BeforeHookCallback callback) {
+    IMethodHook ResHooker = new IMethodHook() {
+        public void before(BeforeHookParam callback) {
             ResourcesTool instance = getInstance();
             if (instance == null) return;
 
@@ -376,22 +373,22 @@ public class ResourcesTool {
                     }
 
                     if (finalResult != null) {
-                        callback.returnAndSkip(finalResult);
+                        callback.setResult(finalResult);
                     } else {
-                        w(TAG, "Mismatched replacement type for method " + methodName + ". Got " + value.getClass().getName());
+                        XposedLog.w(TAG, "Mismatched replacement type for method " + methodName + ". Got " + value.getClass().getName());
                     }
                     break;
                 }
             }
         }
-    }
+    };
 
     public void setResReplacement(String pkg, String type, String name, int replacementResId) {
         try {
             applyHooks();
             replacements.put(new ResKey(pkg, type, name), new Pair<>(ReplacementType.ID, replacementResId));
         } catch (Throwable t) {
-            e(TAG, "setResReplacement failed", t);
+            XposedLog.e(TAG, "setResReplacement failed", t);
         }
     }
 
@@ -400,7 +397,7 @@ public class ResourcesTool {
             applyHooks();
             replacements.put(new ResKey(pkg, type, name), new Pair<>(ReplacementType.DENSITY, replacementResValue));
         } catch (Throwable t) {
-            e(TAG, "setDensityReplacement failed", t);
+            XposedLog.e(TAG, "setDensityReplacement failed", t);
         }
     }
 
@@ -409,7 +406,7 @@ public class ResourcesTool {
             applyHooks();
             replacements.put(new ResKey(pkg, type, name), new Pair<>(ReplacementType.OBJECT, replacementResValue));
         } catch (Throwable t) {
-            e(TAG, "setObjectReplacement failed", t);
+            XposedLog.e(TAG, "setObjectReplacement failed", t);
         }
     }
 
@@ -442,13 +439,13 @@ public class ResourcesTool {
             switch (replacement.first) {
                 case OBJECT:
                     if ("getText".equals(method) && !(replacement.second instanceof CharSequence)) {
-                        w(TAG, "Mismatched type: OBJECT replacement is not a CharSequence for getText method.");
+                        XposedLog.w(TAG, "Mismatched type: OBJECT replacement is not a CharSequence for getText method.");
                         return null;
                     }
                     return replacement.second;
                 case DENSITY: {
                     if ("getText".equals(method)) {
-                        w(TAG, "Mismatched type: DENSITY replacement cannot be used for getText method.");
+                        XposedLog.w(TAG, "Mismatched type: DENSITY replacement cannot be used for getText method.");
                         return null;
                     }
                     Object repl = replacement.second;
@@ -460,7 +457,7 @@ public class ResourcesTool {
                         } catch (NumberFormatException ignored) {
                         }
                     }
-                    w(TAG, "Invalid DENSITY replacement type: " + repl);
+                    XposedLog.w(TAG, "Invalid DENSITY replacement type: " + repl);
                     return null;
                 }
                 case ID: {
@@ -477,11 +474,11 @@ public class ResourcesTool {
                     Object value;
                     try {
                         if ("getDrawable".equals(method) && args.length >= 2) {
-                            value = ReflectUtils.callMethod(resources, method, modResId, args[1]);
+                            value = EzxHelpUtils.callMethod(resources, method, modResId, args[1]);
                         } else if (("getDrawableForDensity".equals(method) || "getFraction".equals(method)) && args.length >= 3) {
-                            value = ReflectUtils.callMethod(resources, method, modResId, args[1], args[2]);
+                            value = EzxHelpUtils.callMethod(resources, method, modResId, args[1], args[2]);
                         } else {
-                            value = ReflectUtils.callMethod(resources, method, modResId);
+                            value = EzxHelpUtils.callMethod(resources, method, modResId);
                         }
                     } finally {
                         resMap.remove(modResId);
@@ -520,7 +517,7 @@ public class ResourcesTool {
                 return replacement.second;
             }
         } catch (Throwable ex) {
-            e(TAG, "getTypedArrayReplacement failed", ex);
+            XposedLog.e(TAG, "getTypedArrayReplacement failed", ex);
         }
         return null;
     }

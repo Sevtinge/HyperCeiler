@@ -19,8 +19,12 @@
 package com.sevtinge.hyperceiler.libhook.utils.log
 
 import android.util.Log
-import com.sevtinge.hyperceiler.libhook.utils.devices.getSerial
+import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Hardware.getSerial
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi.isBeta
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi.isCanary
+import com.sevtinge.hyperceiler.libhook.utils.api.ProjectApi.isRelease
 import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils.mPrefsMap
+import com.sevtinge.hyperceiler.libhook.utils.prefs.PrefsUtils.mSharedPreferences
 import com.sevtinge.hyperceiler.libhook.utils.shell.ShellUtils.rootExecCmd
 import java.io.BufferedReader
 import java.io.File
@@ -37,7 +41,6 @@ import java.util.concurrent.TimeoutException
 /**
  * 日志管理器
  *
- * 参考 hook 模块的 LogManager 实现
  */
 object LogManager {
 
@@ -61,6 +64,14 @@ object LogManager {
     }
 
     @JvmStatic
+    fun setLogLevel() {
+        val logLevel = mSharedPreferences.getString("prefs_key_log_level", "3")!!.toInt()
+        val effectiveLogLevel: Int =
+            getEffectiveLogLevel(logLevel)
+        writeLogLevelToFile(null, effectiveLogLevel)
+    }
+
+    @JvmStatic
     fun setLogLevel(level: Int, basePath: String?) {
         val effectiveLogLevel = getEffectiveLogLevel(level)
         writeLogLevelToFile(basePath, effectiveLogLevel)
@@ -74,8 +85,14 @@ object LogManager {
      * Debug: 0-4 全部
      */
     private fun getEffectiveLogLevel(level: Int): Int {
-        // 简化处理：默认返回传入值，具体项目可覆盖
-        return level.coerceIn(0, 4)
+        if (isRelease()) {
+            return if (level == 0) 0 else 1
+        } else if (isBeta()) {
+            return if (level == 1) 1 else 4
+        } else if (isCanary()) {
+            return if (level == 4) 4 else 3
+        }
+        return level
     }
 
     private fun writeLogLevelToFile(basePath: String?, level: Int) {
