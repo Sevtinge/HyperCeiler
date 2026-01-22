@@ -253,7 +253,7 @@ public abstract class ProvisionBaseActivity extends AppCompatActivity
         if (!OobeUtils.isInternationalBuild()) {
             registerAccessibiltyStateChange(getApplicationContext());
         }
-        if (OobeUtils.needFastAnimation() || needDelayBottomButton()) {
+        /*if (OobeUtils.needFastAnimation() || needDelayBottomButton()) {
             if (needSuperButtonInitial()) {
                 updateButtonState(false);
                 mHandler.postDelayed(() -> updateButtonState(true), 600L);
@@ -261,7 +261,7 @@ public abstract class ProvisionBaseActivity extends AppCompatActivity
                 updateBackButtonState(false);
                 mHandler.postDelayed(() -> updateBackButtonState(true), 600L);
             }
-        }
+        }*/
     }
 
     @Override

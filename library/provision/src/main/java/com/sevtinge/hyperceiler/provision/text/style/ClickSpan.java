@@ -18,6 +18,7 @@
  */
 package com.sevtinge.hyperceiler.provision.text.style;
 
+import android.app.Activity;
 import android.content.Context;
 import android.text.Spanned;
 import android.text.TextPaint;
@@ -26,17 +27,22 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 
+import com.sevtinge.hyperceiler.provision.fragment.WebFragment;
 import com.sevtinge.hyperceiler.provision.utils.OobeUtils;
+import com.sevtinge.hyperceiler.provision.widget.WebBottomSheet;
 
 import java.util.HashMap;
 
+import fan.bottomsheet.BottomSheetBehavior;
+
 public class ClickSpan extends ClickableSpan {
 
-    private Context mContext;
+    private FragmentActivity mContext;
     private HashMap<String, Integer> mPrivacyTypeMap;
 
-    public ClickSpan(Context context, HashMap<String, Integer> typeMap) {
+    public ClickSpan(FragmentActivity context, HashMap<String, Integer> typeMap) {
         this(typeMap);
         mContext = context;
     }
@@ -56,6 +62,26 @@ public class ClickSpan extends ClickableSpan {
         Spanned spanned = (Spanned) ((TextView) widget).getText();
         int spanStart = spanned.getSpanStart(this);
         int spanEnd = spanned.getSpanEnd(this);
-        OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://limestart.cn/"));
+        showBottomSheetMenu(mContext, "Test");
+        //OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://limestart.cn/"));
+    }
+
+    public void showBottomSheetMenu(FragmentActivity activity, String uri) {
+        WebBottomSheet bottomSheetModel = new WebBottomSheet(activity);
+        WebFragment webFragment = new WebFragment();
+        webFragment.setBottomSheetModal(bottomSheetModel);
+        //webFragment.setPeopleAndPetTitle(title);
+        //webFragment.setCompleteCallBack(null);
+        bottomSheetModel.init(uri, activity);
+        bottomSheetModel.setCanceledOnTouchOutside(false);
+        bottomSheetModel.setDragHandleViewEnabled(false);
+        /*if (HyperMaterialUtils.isFeatureEnable(customOrderFragment.getActivity()) && RomUtils.getHyperOsVersion() >= 2) {
+            bottomSheetModel.getBehavior().setModeConfig(0);
+            bottomSheetModel.applyBlur(true);
+        }*/
+        bottomSheetModel.show();
+        bottomSheetModel.setDragHandleViewEnabled(true);
+        //bottomSheetModel.getBehavior().setBottomModeMaxWidth(ResourceUtils.getDimentionPixelsSize(requireContext(), R.dimen.bottom_sheet_dialog_max_width));
+        //bottomSheetModel.setOnDismissListener(new IntentUtil$.ExternalSyntheticLambda0(oncompletecallback, customBottomSheetModel));
     }
 }

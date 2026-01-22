@@ -21,6 +21,7 @@ package com.sevtinge.hyperceiler.utils;
 import android.content.Context;
 
 import com.sevtinge.hyperceiler.common.utils.DialogHelper;
+import com.sevtinge.hyperceiler.provision.fragment.PermissionSettingsFragment;
 
 public class XposedActivateHelper {
 
@@ -32,6 +33,7 @@ public class XposedActivateHelper {
     }
 
     private static void checkActivateState(Context context) {
+        PermissionSettingsFragment.isModuleActive = isModuleActive;
         if (!isModuleActive) DialogHelper.showXposedActivateDialog(context);
     }
 }

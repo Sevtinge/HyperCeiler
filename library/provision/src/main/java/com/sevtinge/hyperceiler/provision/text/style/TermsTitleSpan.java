@@ -19,21 +19,29 @@
 package com.sevtinge.hyperceiler.provision.text.style;
 
 import android.content.Context;
+import android.content.Intent;
 import android.text.TextPaint;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 
+import com.sevtinge.hyperceiler.provision.fragment.WebFragment;
 import com.sevtinge.hyperceiler.provision.utils.OobeUtils;
+import com.sevtinge.hyperceiler.provision.widget.WebBottomSheet;
+
+import fan.bottomsheet.BottomSheetBehavior;
+import fan.core.utils.HyperMaterialUtils;
+import fan.core.utils.RomUtils;
 
 public class TermsTitleSpan extends ClickableSpan {
 
-    private Context mContext;
+    private FragmentActivity mContext;
     private int mHiperlinkType;
 
-    public TermsTitleSpan(Context context, int type) {
+    public TermsTitleSpan(FragmentActivity context, int type) {
         mContext = context;
         mHiperlinkType = type;
     }
@@ -46,16 +54,38 @@ public class TermsTitleSpan extends ClickableSpan {
     @Override
     public void onClick(@NonNull View widget) {
         Log.i("TermsAndStatementFragment", " here is TermsTitleSpan onClick ");
-        /*Intent licenseIntent = Utils.getLicenseIntent("");
+        Intent licenseIntent = OobeUtils.getLicenseIntent("");
         if (mHiperlinkType == 2) {
             Log.i("TermsAndStatementFragment", " here is User Agreement click ");
-            licenseIntent.putExtra("android.intent.extra.LICENSE_TYPE", 2);
+            //licenseIntent.putExtra("android.intent.extra.LICENSE_TYPE", 2);
+            showBottomSheetMenu(mContext, "https://gcore.jsdelivr.net/gh/ReChronoRain/website@main/Protocol.md");
+            //OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://gcore.jsdelivr.net/gh/ReChronoRain/website@main/Protocol.md"));
             //OTHelper.rdCountEvent("key_click_terms_license");
         } else if (mHiperlinkType == 1) {
             Log.i("TermsAndStatementFragment", " here is Privacy Policy click ");
-            licenseIntent.putExtra("android.intent.extra.LICENSE_TYPE", 1);
+            showBottomSheetMenu(mContext, "https://gcore.jsdelivr.net/gh/ReChronoRain/website@main/Privacy.md");
+            //licenseIntent.putExtra("android.intent.extra.LICENSE_TYPE", 1);
+            //OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://gcore.jsdelivr.net/gh/ReChronoRain/website@main/Privacy.md"));
             //OTHelper.rdCountEvent("key_click_terms_privacy");
-        }*/
-        OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://raw.githubusercontent.com/ReChronoRain/website/main/Privacy.md"));
+        }
+    }
+
+    public void showBottomSheetMenu(FragmentActivity activity, String uri) {
+        WebBottomSheet bottomSheetModel = new WebBottomSheet(activity);
+        WebFragment webFragment = new WebFragment();
+        webFragment.setBottomSheetModal(bottomSheetModel);
+        //webFragment.setPeopleAndPetTitle(title);
+        //webFragment.setCompleteCallBack(null);
+        bottomSheetModel.init(uri, activity);
+        bottomSheetModel.setDragHandleViewEnabled(true);
+        bottomSheetModel.setCanceledOnTouchOutside(false);
+        bottomSheetModel.setDragHandleViewEnabled(false);
+        if (HyperMaterialUtils.isFeatureEnable(activity) && RomUtils.getHyperOsVersion() >= 2) {
+            bottomSheetModel.getBehavior().setModeConfig(0);
+            bottomSheetModel.applyBlur(true);
+        }
+        bottomSheetModel.show();
+        //bottomSheetModel.getBehavior().setBottomModeMaxWidth(ResourceUtils.getDimentionPixelsSize(requireContext(), R.dimen.bottom_sheet_dialog_max_width));
+        //bottomSheetModel.setOnDismissListener(new IntentUtil$.ExternalSyntheticLambda0(oncompletecallback, customBottomSheetModel));
     }
 }

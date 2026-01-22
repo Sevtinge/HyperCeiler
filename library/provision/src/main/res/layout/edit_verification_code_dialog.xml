@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ This file is part of HyperCeiler.
   ~
   ~ HyperCeiler is free software: you can redistribute it and/or modify
@@ -18,19 +17,28 @@
   ~ Copyright (C) 2023-2025 HyperCeiler Contributions
   -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/provision_lyt_actionbar"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingHorizontal="@dimen/provision_actionbar_padding_horizontal"
-    android:paddingTop="@dimen/provision_actionbar_padding_top"
-    android:paddingBottom="@dimen/provision_actionbar_padding_bottom">
+    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd">
 
-    <ImageView
-        android:id="@+id/back_icon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="@dimen/provision_back_icon_margin_start"
-        android:contentDescription="@string/provision_back_description"
-        android:src="?android:homeAsUpIndicator" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        style="@style/ProvisionListSecondaryTextStyle"
+        android:textSize="14sp"
+        android:layout_gravity="center"
+        android:text="@string/provision_terms_of_use_verification_code_dialog_desc" />
+
+    <EditText
+        android:id="@+id/title"
+        android:layout_marginVertical="5dp"
+        android:maxLength="6"
+        android:maxLines="1"
+        android:inputType="number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 </LinearLayout>

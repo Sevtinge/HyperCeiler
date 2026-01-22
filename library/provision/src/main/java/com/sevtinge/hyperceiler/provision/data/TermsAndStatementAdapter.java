@@ -34,6 +34,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import androidx.fragment.app.FragmentActivity;
+
 import com.sevtinge.hyperceiler.provision.text.style.ClickSpan;
 import com.sevtinge.hyperceiler.provision.text.style.TermsTitleSpan;
 import com.sevtinge.hyperceiler.provision.utils.OobeUtils;
@@ -47,12 +49,13 @@ public class TermsAndStatementAdapter extends BaseAdapter {
     public static int TYPE_SERVICE_ITEM = 1;
     public static int TYPE_TERMS_ITEM = 2;
 
-    private final Context mContext;
+    private final FragmentActivity mContext;
     private final LayoutInflater mInflater;
     private final HashMap<String, Integer> mPrivacyTypeMap;
     private final ArrayList<ServiceItem> mServiceItems;
+    private OnWebClickListener mOnWebClickListener;
 
-    public TermsAndStatementAdapter(Context context) {
+    public TermsAndStatementAdapter(FragmentActivity context) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
         ServiceStateDataHelper serviceStateDataHelper = new ServiceStateDataHelper(context);
@@ -60,6 +63,13 @@ public class TermsAndStatementAdapter extends BaseAdapter {
         mPrivacyTypeMap = serviceStateDataHelper.getPrivacyTypeMap();
     }
 
+    public interface OnWebClickListener {
+        void onClickListener(String uri);
+    }
+
+    public void setOnWebClickListener(OnWebClickListener listener) {
+        mOnWebClickListener = listener;
+    }
 
     @Override
     public int getCount() {
@@ -186,6 +196,7 @@ public class TermsAndStatementAdapter extends BaseAdapter {
                     holder.policy.setText(Html.fromHtml(serviceItem.privacyPolicy, Html.FROM_HTML_MODE_COMPACT));
                     holder.policy.setMovementMethod(LinkMovementMethod.getInstance());
                     holder.policy.setOnClickListener(v -> {
+                        mOnWebClickListener.onClickListener("https://limestart.cn/");
                         OobeUtils.startActivity(mContext, OobeUtils.getLicenseIntent("https://limestart.cn/"));
                     });
                 }
